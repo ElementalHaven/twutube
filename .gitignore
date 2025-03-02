@@ -1,0 +1,20 @@
+# Ignore any files other than what are relevant to a plain html+css+js site
+# Mainly Visual Studio files since that's what's being developed with
+# Also Typescript mappings since I plan to use Typescript
+
+# User-specific files
+*.user
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+
+# Visual Studio project files
+*.csproj
+*.sln
+*.config
+[Pp]roperties/
+**/[Pp]ackages/*
