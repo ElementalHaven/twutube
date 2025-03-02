@@ -1,1 +1,33 @@
-﻿
+﻿html {
+	font-size: 62.5%;
+}
+body {
+	font-size: 1.6rem;
+}
+.theme-dark {
+	background: #333;
+	color: #FFF;
+}
+.theme-light {
+	background: #FFF;
+	color: #000;
+}
+.player-page {
+	display: flex;
+	flex-direction: row;
+	margin: 0;
+	height: 100vh;
+}
+.player-page.chat-on-left {
+	flex-direction: row-reverse;
+}
+.player-area {
+	flex: auto;
+	background: #000;
+	color: #FFF;
+}
+.chat-area {
+	width: 34rem;
+	min-width: 34rem;
+	flex: 0;
+}
