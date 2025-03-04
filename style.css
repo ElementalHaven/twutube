@@ -70,7 +70,7 @@ body {
 	bottom: var(--thumb-margin);
 	right: var(--thumb-margin);
 }
-.videos-page {
+.videos-page, .userlist-page {
 	margin: 24px;
 }
 .videos-page > h1 {
@@ -82,18 +82,20 @@ body {
 	width: 100px;
 	height: 100px;
 }
-.video-tile {
+.video-tile, .user-tile {
 	display: inline-grid;
 	grid-row-gap: 4px;
-	padding: 8px;
 	color: inherit;
 	text-decoration: none;
-	width: 240px;
 	box-sizing: content-box;
-	font-size: 1.3rem;
 }
-.video-tile:hover {
+.video-tile:hover, .user-tile:hover {
 	background: rgba(127, 127, 127, 0.2);
+}
+.video-tile {
+	padding: 8px;
+	width: 240px;
+	font-size: 1.3rem;
 }
 .video-tile .title {
 	font-weight: bold;
@@ -109,6 +111,19 @@ body {
 	margin: 1rem 0;
 	font-size: 2.6rem;
 }
+.user-tile {
+	padding: 24px;
+}
+.user-tile img {
+	width: 300px;
+	height: 300px;
+}
+.user-tile h1 {
+	margin: 0;
+}
+.user-tile div {
+	text-indent: 2rem;
+}
 .no-js {
 	width: 100vw;
 	height: 100vh;
@@ -122,7 +137,7 @@ body {
 .no-js::after {
 	content: "This page requires Javascript";
 	/* the animation is so the user isn't shown an error while the js loads and runs */
-	animation: 0.2s errview;
+	animation: 0.4s errview;
 }
 @keyframes errview {
 	from {

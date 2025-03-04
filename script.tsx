@@ -37,6 +37,12 @@ class SerializedVideos {
 	games: Map<string, string>;
 }
 
+class UserSummary {
+	name: string;
+	videos: number;
+	playlists: number;
+}
+
 function initPage() {
 	const pageInfo = getPageType();
 	document.body.className = pageInfo[0] + "-page";
@@ -86,8 +92,23 @@ function getTheme(page: string) {
 	return page == "player" ? "dark" : "light";
 }
 
-function showUsersPage() {
-	document.body.innerText = "List of users with profile pictures, video counts, and collection counts goes here";
+async function showUsersPage() {
+	const root = document.body;
+	root.innerText = "Loading...";
+	const response = await fetch(basePath + "users.json");
+	if(!response.ok) {
+		root.innerText = "Failed to fetch list of users";
+		return;
+	}
+	try {
+		let users: UserSummary[] = await response.json();
+		root.innerText = "";
+		for(let user of users) {
+			manualUserTile(user, root);
+		}
+	} catch {
+		document.body.innerText = `Failed to parse data for user list`;
+	}
 }
 
 function showErrorPage(requested: string) {
@@ -148,7 +169,7 @@ function playerPage(videoId: string) {
 function videoTile(video: Video, id: string, games: Map<string, string>) {
 	return (
 		<div class="video-tile">
-			<div class="thumbnail" style={{background: `url("${basePath}thumbs/${id}.jpg")`}}>
+			<div class="thumbnail" style={{background: `url("${basePath}videos/${id}.jpg")`}}>
 				<div>{video.length}</div>
 				<div>{video.created}</div>
 			</div>
@@ -163,8 +184,8 @@ function videoTile(video: Video, id: string, games: Map<string, string>) {
 function manualVideoTile(video: Video, id: string, games: Map<string, string>, parent: HTMLElement) {
 	let tile = nt("a", parent, "video-tile") as HTMLAnchorElement;
 	tile.href = `${basePath}videos/${id}`;
-	let thumb = nt("div", tile, "thumbnail") as HTMLImageElement;
-	thumb.style.background = `url("${basePath}thumbs/${id}.jpg")`;
+	let thumb = nt("div", tile, "thumbnail");
+	thumb.style.background = `url("${basePath}videos/${id}.jpg")`;
 	/* change these 2 to be below title? */
 	nt("div", thumb).innerText = video.length;
 	nt("div", thumb).innerText = video.created;
@@ -177,10 +198,21 @@ function manualVideoTile(video: Video, id: string, games: Map<string, string>, p
 	if(video.game) nt("div", tile).innerText = games[video.game];
 }
 
+function manualUserTile(user: UserSummary, parent: HTMLElement) {
+	const id = user.name.toLowerCase();
+	let tile = nt("a", parent, "user-tile") as HTMLAnchorElement;
+	tile.href = basePath + id + "/videos";
+	let pic = nt("img", tile, "profile-pic") as HTMLImageElement;
+	pic.src = `${basePath}users/${id}.jpeg`;
+	nt("h1", tile).innerText = user.name;
+	nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
+}
+
 function showPlayerPage(videoId: string) {
 	//let page = playerPage(videoId);
 	//document.body.append(page);
 
+	// TODO make title be `${stream_title} - Twutube`
 	player = nt("div", document.body, "player-area");
 	player.innerText = "Embed of video " + videoId + " here";
 	let chat = nt("div", document.body, "chat-area");

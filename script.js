@@ -30,6 +30,11 @@ class SerializedVideos {
     // map of ids to names
     games;
 }
+class UserSummary {
+    name;
+    videos;
+    playlists;
+}
 function initPage() {
     const pageInfo = getPageType();
     document.body.className = pageInfo[0] + "-page";
@@ -71,8 +76,24 @@ function getTheme(page) {
         return "light";
     return page == "player" ? "dark" : "light";
 }
-function showUsersPage() {
-    document.body.innerText = "List of users with profile pictures, video counts, and collection counts goes here";
+async function showUsersPage() {
+    const root = document.body;
+    root.innerText = "Loading...";
+    const response = await fetch(basePath + "users.json");
+    if (!response.ok) {
+        root.innerText = "Failed to fetch list of users";
+        return;
+    }
+    try {
+        let users = await response.json();
+        root.innerText = "";
+        for (let user of users) {
+            manualUserTile(user, root);
+        }
+    }
+    catch {
+        document.body.innerText = `Failed to parse data for user list`;
+    }
 }
 function showErrorPage(requested) {
     document.body.innerText = "You're on a 404 page as a result of trying to access " + requested;
@@ -128,7 +149,7 @@ function playerPage(videoId) {
 // and maybe one day in the future I'll actually get it sorted -Liz (3/3/25)
 function videoTile(video, id, games) {
     return (React.createElement("div", { class: "video-tile" },
-        React.createElement("div", { class: "thumbnail", style: { background: `url("${basePath}thumbs/${id}.jpg")` } },
+        React.createElement("div", { class: "thumbnail", style: { background: `url("${basePath}videos/${id}.jpg")` } },
             React.createElement("div", null, video.length),
             React.createElement("div", null, video.created)),
         React.createElement("div", { class: "boxart", style: { background: `url("${basePath}boxart/${video.game}.jpg")` } }),
@@ -140,7 +161,7 @@ function manualVideoTile(video, id, games, parent) {
     let tile = nt("a", parent, "video-tile");
     tile.href = `${basePath}videos/${id}`;
     let thumb = nt("div", tile, "thumbnail");
-    thumb.style.background = `url("${basePath}thumbs/${id}.jpg")`;
+    thumb.style.background = `url("${basePath}videos/${id}.jpg")`;
     /* change these 2 to be below title? */
     nt("div", thumb).innerText = video.length;
     nt("div", thumb).innerText = video.created;
@@ -153,9 +174,19 @@ function manualVideoTile(video, id, games, parent) {
     if (video.game)
         nt("div", tile).innerText = games[video.game];
 }
+function manualUserTile(user, parent) {
+    const id = user.name.toLowerCase();
+    let tile = nt("a", parent, "user-tile");
+    tile.href = basePath + id + "/videos";
+    let pic = nt("img", tile, "profile-pic");
+    pic.src = `${basePath}users/${id}.jpeg`;
+    nt("h1", tile).innerText = user.name;
+    nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
+}
 function showPlayerPage(videoId) {
     //let page = playerPage(videoId);
     //document.body.append(page);
+    // TODO make title be `${stream_title} - Twutube`
     player = nt("div", document.body, "player-area");
     player.innerText = "Embed of video " + videoId + " here";
     let chat = nt("div", document.body, "chat-area");
