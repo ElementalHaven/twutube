@@ -81,7 +81,7 @@ async function showUsersPage() {
     root.innerText = "Loading...";
     const response = await fetch(basePath + "users.json");
     if (!response.ok) {
-        root.innerText = "Failed to fetch list of users";
+        showError("Failed to fetch list of users");
         return;
     }
     try {
@@ -92,11 +92,15 @@ async function showUsersPage() {
         }
     }
     catch {
-        document.body.innerText = `Failed to parse data for user list`;
+        showError(`Failed to parse data for user list`);
     }
 }
+function showError(msg) {
+    document.title = "Twutube Error";
+    document.body.innerText = msg;
+}
 function showErrorPage(requested) {
-    document.body.innerText = "You're on a 404 page as a result of trying to access " + requested;
+    showError("You're on a 404 page as a result of trying to access " + requested);
 }
 async function showVideosPage(user) {
     const root = document.body;
@@ -104,7 +108,7 @@ async function showVideosPage(user) {
     const id = user.toLowerCase();
     const response = await fetch(`${basePath}users/${id}.json`);
     if (!response.ok) {
-        root.innerText = `User ${user} not found`;
+        showError(`User ${user} not found`);
         return;
     }
     try {
@@ -128,8 +132,10 @@ async function showVideosPage(user) {
         }
     }
     catch {
-        document.body.innerText = `Failed to parse data for ${user}'s videos and collections`;
+        showError(`Failed to parse data for ${user}'s videos and collections`);
     }
+}
+function addThemeButton() {
 }
 //* This felt like a great opportunity to learn & use react
 // but the mountain of issues I'm experiencing makes me want to curl up in a ball
@@ -143,7 +149,15 @@ function playerPage(videoId) {
             "Embed of video ",
             videoId,
             " here"),
-        React.createElement("div", { class: "chat-area" }, "Chat goes here")));
+        React.createElement("div", { class: "sidebar", "data-tab": "Chat" },
+            React.createElement("div", { class: "chat-header" },
+                React.createElement("span", null, "Chat on Videos"),
+                React.createElement("input", { type: "radio", name: "tab", title: "Chat" }),
+                React.createElement("input", { type: "radio", name: "tab", title: "Info" }),
+                React.createElement("input", { type: "radio", name: "tab", title: "Settings" })),
+            React.createElement("div", { class: "chat-area" }),
+            React.createElement("div", null, "Stream info here(title, description, game, boxart, length, date)"),
+            React.createElement("div", null, "Settings here"))));
 }
 // even if I can't use react atm, it at least lets me visualize the resulting code
 // and maybe one day in the future I'll actually get it sorted -Liz (3/3/25)
@@ -183,14 +197,49 @@ function manualUserTile(user, parent) {
     nt("h1", tile).innerText = user.name;
     nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
 }
+function manualSettings(parent) {
+    let pane = nt("div", parent, "settings");
+    pane.innerText = "Settings go here";
+    // general, emotes, badges
+    // "Dark Theme"
+    // "Use Alternate Favicon"
+    // "Show Twitch Emotes"
+    // "Show FFZ Emotes"
+    // "Show 7tv Emotes"
+    // checkboxes for bit badges, sub badges, twitchcon, event badges, prime/turbo
+    // "Hide Uncustomized Sub/Bit Badges"
+    // "Use Alternate Default Badges"
+    // "Use sub badge in place of founder badge"
+    // ability to manually add badges to block
+}
 function showPlayerPage(videoId) {
     //let page = playerPage(videoId);
     //document.body.append(page);
     // TODO make title be `${stream_title} - Twutube`
     player = nt("div", document.body, "player-area");
     player.innerText = "Embed of video " + videoId + " here";
-    let chat = nt("div", document.body, "chat-area");
+    let sidebar = nt("div", document.body, "sidebar");
+    sidebar.dataset["tab"] = "Chat";
+    let header = nt("div", sidebar, "chat-header");
+    let label = nt("span", header);
+    label.innerText = "Chat";
+    const types = ["Chat", "Info", "Settings"];
+    for (let type of types) {
+        let radio = nt("input", header);
+        radio.type = "radio";
+        radio.name = "tab";
+        radio.value = type.toLowerCase();
+        radio.title = type;
+        radio.addEventListener("change", ev => {
+            sidebar.dataset["tab"] = type;
+            label.innerText = type;
+        });
+        if (type == "Chat")
+            radio.checked = true;
+    }
+    let chat = nt("div", sidebar, "chat-area");
     chat.innerText = "Chat goes here";
+    manualSettings(sidebar);
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

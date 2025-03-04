@@ -97,7 +97,7 @@ async function showUsersPage() {
 	root.innerText = "Loading...";
 	const response = await fetch(basePath + "users.json");
 	if(!response.ok) {
-		root.innerText = "Failed to fetch list of users";
+		showError("Failed to fetch list of users");
 		return;
 	}
 	try {
@@ -107,12 +107,17 @@ async function showUsersPage() {
 			manualUserTile(user, root);
 		}
 	} catch {
-		document.body.innerText = `Failed to parse data for user list`;
+		showError(`Failed to parse data for user list`);
 	}
 }
 
+function showError(msg: string) {
+	document.title = "Twutube Error";
+	document.body.innerText = msg;
+}
+
 function showErrorPage(requested: string) {
-	document.body.innerText = "You're on a 404 page as a result of trying to access " + requested;
+	showError("You're on a 404 page as a result of trying to access " + requested);
 }
 
 async function showVideosPage(user: string) {
@@ -121,7 +126,7 @@ async function showVideosPage(user: string) {
 	const id = user.toLowerCase();
 	const response = await fetch(`${basePath}users/${id}.json`);
 	if(!response.ok) {
-		root.innerText = `User ${user} not found`;
+		showError(`User ${user} not found`);
 		return;
 	}
 	try {
@@ -145,8 +150,12 @@ async function showVideosPage(user: string) {
 			}
 		}
 	} catch {
-		document.body.innerText = `Failed to parse data for ${user}'s videos and collections`;
+		showError(`Failed to parse data for ${user}'s videos and collections`);
 	}
+}
+
+function addThemeButton() {
+
 }
 
 //* This felt like a great opportunity to learn & use react
@@ -159,7 +168,18 @@ function playerPage(videoId: string) {
 	return (
 		<>
 			<div class="player-area">Embed of video {videoId} here</div>
-			<div class="chat-area">Chat goes here</div>
+			<div class="sidebar" data-tab="Chat">
+				<div class="chat-header">
+					<span>Chat on Videos</span>
+					<input type="radio" name="tab" title="Chat" />
+					<input type="radio" name="tab" title="Info" />
+					<input type="radio" name="tab" title="Settings" />
+				</div>
+				<div class="chat-area">
+				</div>
+				<div>Stream info here(title, description, game, boxart, length, date)</div>
+				<div>Settings here</div>
+			</div>
 		</>
 	);
 }
@@ -208,6 +228,23 @@ function manualUserTile(user: UserSummary, parent: HTMLElement) {
 	nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
 }
 
+function manualSettings(parent: HTMLElement) {
+	let pane = nt("div", parent, "settings");
+	pane.innerText = "Settings go here";
+
+	// general, emotes, badges
+	// "Dark Theme"
+	// "Use Alternate Favicon"
+	// "Show Twitch Emotes"
+	// "Show FFZ Emotes"
+	// "Show 7tv Emotes"
+	// checkboxes for bit badges, sub badges, twitchcon, event badges, prime/turbo
+	// "Hide Uncustomized Sub/Bit Badges"
+	// "Use Alternate Default Badges"
+	// "Use sub badge in place of founder badge"
+	// ability to manually add badges to block
+}
+
 function showPlayerPage(videoId: string) {
 	//let page = playerPage(videoId);
 	//document.body.append(page);
@@ -215,8 +252,30 @@ function showPlayerPage(videoId: string) {
 	// TODO make title be `${stream_title} - Twutube`
 	player = nt("div", document.body, "player-area");
 	player.innerText = "Embed of video " + videoId + " here";
-	let chat = nt("div", document.body, "chat-area");
+
+	let sidebar = nt("div", document.body, "sidebar");
+	sidebar.dataset["tab"] = "Chat";
+	let header = nt("div", sidebar, "chat-header");
+	let label = nt("span", header);
+	label.innerText = "Chat";
+	const types = ["Chat", "Info", "Settings"];
+	for(let type of types) {
+		let radio = nt("input", header) as HTMLInputElement;
+		radio.type = "radio";
+		radio.name = "tab";
+		radio.value = type.toLowerCase();
+		radio.title = type;
+		radio.addEventListener("change", ev => {
+			sidebar.dataset["tab"] = type;
+			label.innerText = type;
+		});
+		if(type == "Chat") radio.checked = true;
+	}
+
+	let chat = nt("div", sidebar, "chat-area");
 	chat.innerText = "Chat goes here";
+
+	manualSettings(sidebar);
 }
 
 window["initPage"] = initPage;

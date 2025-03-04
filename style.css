@@ -4,17 +4,24 @@
 }
 :root {
 	--thumb-margin: 8px;
+	--ch-height: 4rem;
+	--sm-border: 1px solid rgba(127, 127, 127, 0.2);
+	--fg-dark: #FFF;
+	--fg-light: #333;
+	--bg-dark: #222;
+	--bg-light: #FFF;
+	--btn-size: 28px;
 }
 body {
 	font-size: 1.6rem;
 }
 .theme-dark {
-	background: #333;
-	color: #FFF;
+	background: var(--bg-dark);
+	color: var(--fg-dark);
 }
 .theme-light {
-	background: #FFF;
-	color: #333;
+	background: var(--bg-light);
+	color: var(--fg-light);
 }
 .player-page {
 	display: flex;
@@ -32,23 +39,68 @@ body {
 }
 @media (prefers-color-scheme: dark) {
 	body:not([class*="theme"]) {
-		background: #333;
-		color: #FFF;
+		background: var(--bg-dark);
+		color: var(--fg-dark);
 	}
 }
 @media (prefers-color-scheme: light) {
 	body:not([class*="theme"]) {
-		background: #FFF;
-		color: #000;
+		background: var(--bg-light);
+		color: var(--fg-light);
 	}
 }
-.chat-area {
+.sidebar {
 	width: 34rem;
 	min-width: 34rem;
 	flex: 0;
+	display: flex;
+	flex-direction: column;
 }
-.chat-area.collapsed {
+body:not(.chat-on-left) .sidebar {
+	border-left: var(--sm-border);
+}
+.chat-on-left .sidebar {
+	border-right: var(--sm-border);
+}
+.chat-header {
+	height: var(--ch-height);
+	min-height: var(--ch-height);
+	line-height: var(--ch-height);
+	background: rgba(127, 127, 127, 0.1);
+	border-bottom: var(--sm-border);
+	flex: 0;
+	padding: 0 0.5em;
+	color: #808080;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	gap: 8px;
+}
+.chat-header span {
+	flex: auto;
+}
+.chat-header input {
+	flex: 0;
+	appearance: none;
+	width: var(--btn-size);
+	min-width: var(--btn-size);
+	height: var(--btn-size);
+	background: #808080;
+	margin: 0;
+}
+.chat-header input:checked {
+	background: #0F0;
+}
+.chat-header ~ div {
 	display: none;
+	flex: auto;
+	scrollbar-width: thin;
+}
+.sidebar[data-tab=Chat] .chat-area, .sidebar[data-tab=Info] .info-pane, .sidebar[data-tab=Settings] .settings {
+	display: block;
+}
+.settings {
+	padding: 8px;
 }
 .thumbnail {
 	width: 240px;
