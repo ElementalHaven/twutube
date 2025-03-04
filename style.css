@@ -1,6 +1,6 @@
 ﻿html {
 	font-size: 62.5%;
-	font-family: Arial, Helvetica, sans-serif;
+	font-family: "Inter","Roobert","Helvetica Neue",Helvetica,Arial,sans-serif;
 }
 :root {
 	--thumb-margin: 8px;
@@ -88,14 +88,19 @@ body {
 	padding: 8px;
 	color: inherit;
 	text-decoration: none;
+	width: 240px;
+	box-sizing: content-box;
+	font-size: 1.3rem;
 }
 .video-tile:hover {
 	background: rgba(127, 127, 127, 0.2);
 }
 .video-tile .title {
 	font-weight: bold;
+	font-size: 1.6rem;
 	text-overflow: ellipsis;
 	overflow-x: hidden;
+	white-space: nowrap;
 }
 .collection:first-of-type {
 	margin-top: 16px;
