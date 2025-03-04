@@ -1,5 +1,7 @@
 import * as React from './Scripts/react/react.js';
 let player = null;
+let chat = null;
+let streamData = null;
 // change to "/twutube/" once on github
 const basePath = "/";
 const pageRenderers = {
@@ -8,6 +10,19 @@ const pageRenderers = {
     "error": showErrorPage,
     "userlist": showUsersPage
 };
+class MessageFragment {
+    text;
+    emote;
+}
+class ChatMessage {
+    author;
+    color;
+    // offset in seconds
+    offset;
+    badges;
+    fragments;
+    system;
+}
 class Video {
     // game ids
     game;
@@ -16,6 +31,11 @@ class Video {
     created;
     // [h:]m:ss
     length;
+}
+class Stream extends Video {
+    description;
+    ytid;
+    chat;
 }
 class Collection {
     name;
@@ -216,13 +236,13 @@ function manualUserTile(user, parent) {
     nt("h1", tile).innerText = user.name;
     nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
 }
-function settingsCheckbox(text, parent, storageName, onChange) {
+function settingsCheckbox(text, parent, storageName, onChange, defVal = false) {
     let wrapper = nt("div", parent, "option");
     let label = nt("label", wrapper);
     label.innerText = text;
     let cbox = nt("input", wrapper);
     cbox.type = "checkbox";
-    cbox.checked = getBoolStorage(storageName);
+    cbox.checked = getBoolStorage(storageName) ?? defVal;
     cbox.addEventListener("change", _ => {
         setBoolStorage(storageName, cbox.checked);
         onChange(cbox.checked);
@@ -231,6 +251,12 @@ function settingsCheckbox(text, parent, storageName, onChange) {
     cbox.id = id;
     label.htmlFor = id;
     onChange(cbox.checked);
+}
+function chatViewSetting(text, parent, name, invert = false, defVal = true) {
+    name = (invert ? "hide_" : "show_") + name;
+    settingsCheckbox(text, parent, name, show => {
+        chat.classList.toggle(name, show);
+    }, defVal);
 }
 function settingsGroup(text, parent) {
     let tag = nt("details", parent);
@@ -246,13 +272,16 @@ function manualSettings(parent) {
         cls.toggle("theme-dark", checked);
         cls.toggle("theme-light", !checked);
     });
+    chatViewSetting("Disable Animations", general, "anims", true, false);
+    settingsCheckbox("Chat on Left", general, "chat_on_left", onLeft => {
+        document.body.classList.toggle("chat-on-left", onLeft);
+    });
     settingsCheckbox("Use Alternate Favicon", general, "alt_icon", useAltIcon);
     // "Show Message Timestamps": ["Always", "Never", "On Hover"]
     let emotes = settingsGroup("Emotes", pane);
-    // "Show Twitch Emotes"
-    // "Show FFZ Emotes"
-    // "Show 7tv Emotes"
-    // disable animated emotes
+    chatViewSetting("Show Twitch Emotes", emotes, "ttv_emotes");
+    chatViewSetting("Show FFZ Emotes", emotes, "ffz_emotes");
+    chatViewSetting("Show 7tv Emotes", emotes, "7tv_emotes");
     // ability to manually block specific emotes
     let badges = settingsGroup("Badges", pane);
     // checkboxes for bit badges, sub badges, twitchcon, event badges, prime/turbo
@@ -261,12 +290,27 @@ function manualSettings(parent) {
     // "Use sub badge in place of founder badge"
     // ability to manually add badges to block
 }
-function showPlayerPage(videoId) {
+async function showPlayerPage(videoId) {
+    const root = document.body;
+    root.innerText = "Loading...";
+    const response = await fetch(`${basePath}videos/${videoId}.json`);
+    if (!response.ok) {
+        showError("Failed to fetch video metadata");
+        return;
+    }
+    try {
+        streamData = await response.json();
+        root.innerText = "";
+        document.title = `${streamData.title} - Twutube`;
+    }
+    catch {
+        showError(`Failed to parse video metadata`);
+        return;
+    }
     //let page = playerPage(videoId);
     //document.body.append(page);
-    // TODO make title be `${stream_title} - Twutube`
     player = nt("div", document.body, "player-area");
-    player.innerText = "Embed of video " + videoId + " here";
+    player.innerText = "Loading...";
     let sidebar = nt("div", document.body, "sidebar");
     sidebar.dataset["tab"] = "Chat";
     let header = nt("div", sidebar, "chat-header");
@@ -286,9 +330,14 @@ function showPlayerPage(videoId) {
         if (type == "Chat")
             radio.checked = true;
     }
-    let chat = nt("div", sidebar, "chat-area");
+    chat = nt("div", sidebar, "chat-area");
     chat.innerText = "Chat goes here";
     manualSettings(sidebar);
+    if (streamData.ytid) {
+    }
+    else {
+        player.innerText = "No Youtube video associated with this Twitch stream";
+    }
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

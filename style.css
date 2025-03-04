@@ -36,6 +36,9 @@ body {
 	flex: auto;
 	background: #000;
 	color: #FFF;
+	justify-content: center;
+	align-items: center;
+	display: flex;
 }
 @media (prefers-color-scheme: dark) {
 	body:not([class*="theme"]) {
