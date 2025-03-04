@@ -1,0 +1,40 @@
+{
+	"user": "TarnsmanDW",
+	"videos": {
+		"134177254": {
+			"game": "mass-effect-andromeda",
+			"title": "A Poor Choice Of Last Words",
+			"created": "Apr 8, 2017",
+			"length": "2:00"
+		}
+	},
+	"collections": [
+		{
+			"name": "All Videos",
+			"videos": [
+				"134177254"
+			]
+		},
+		{
+			"name": "Highlights",
+			"videos": [
+				"134177254"
+			]
+		},
+		{
+			"name": "Tarnsman and Co. Endures",
+			"videos": []
+		},
+		{
+			"name": "The Great Shovelware Extravaganza (Maximum Doom)",
+			"videos": []
+		},
+		{
+			"name": "Literally Blind Doom",
+			"videos": []
+		}
+	],
+	"games": {
+		"mass-effect-andromeda": "Mass Effect: Andromeda"
+	}
+}

@@ -21,3 +21,6 @@
 
 # Typescript <-> Javascript mapping files
 *.map
+
+# Failed usage of react attempt
+[Ss]cripts/
