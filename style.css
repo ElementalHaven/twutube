@@ -95,12 +95,33 @@ body:not(.chat-on-left) .sidebar {
 	display: none;
 	flex: auto;
 	scrollbar-width: thin;
+	flex-direction: column;
 }
 .sidebar[data-tab=Chat] .chat-area, .sidebar[data-tab=Info] .info-pane, .sidebar[data-tab=Settings] .settings {
-	display: block;
+	display: flex;
 }
 .settings {
-	padding: 8px;
+	padding: 4px 0;
+	gap: 4px;
+}
+.settings summary {
+	cursor: pointer;
+	padding: 4px;
+	padding-left: 8px;
+}
+.option {
+	display: flex;
+	flex-direction: row;
+	padding: 4px 8px;
+}
+.option:hover {
+	background: rgba(127, 127, 127, 0.1);
+}
+.option label {
+	flex: auto;
+}
+.option input {
+	flex: 0;
 }
 .thumbnail {
 	width: 240px;

@@ -42,6 +42,7 @@ function initPage() {
     // done after setting page class so that there can be separate default themes
     const theme = getTheme(pageInfo[0]);
     document.body.classList.add("theme-" + theme);
+    useAltIcon(getBoolStorage("alt_icon"));
     pageRenderers[pageInfo[0]](pageInfo[1]);
 }
 function nt(tagName, parent, cls) {
@@ -50,6 +51,22 @@ function nt(tagName, parent, cls) {
         elem.className = cls;
     parent.append(elem);
     return elem;
+}
+function getBoolStorage(name) {
+    let val = window.localStorage.getItem(name);
+    return val === null ? null : val === "1";
+}
+function setBoolStorage(name, val) {
+    window.localStorage.setItem(name, val ? '1' : '0');
+}
+function useAltIcon(use) {
+    let links = document.querySelectorAll('link[rel="shortcut icon"]');
+    let pair = ["c.", "b."];
+    if (use)
+        pair = pair.reverse();
+    for (let link of links) {
+        link.href = link.href.replace(pair[0], pair[1]);
+    }
 }
 function getPageType() {
     let path = document.location.pathname;
@@ -67,7 +84,9 @@ function getPageType() {
     return ["error", path];
 }
 function getTheme(page) {
-    // TODO get theme from local storage based on page
+    let dark = getBoolStorage(page + "_dark");
+    if (dark !== null)
+        return dark ? "dark" : "light";
     let result = window.matchMedia("(prefers-color-scheme: dark)");
     if (result.matches)
         return "dark";
@@ -197,15 +216,45 @@ function manualUserTile(user, parent) {
     nt("h1", tile).innerText = user.name;
     nt("div", tile).innerText = `${user.videos} videos, ${user.playlists} collections`;
 }
+function settingsCheckbox(text, parent, storageName, onChange) {
+    let wrapper = nt("div", parent, "option");
+    let label = nt("label", wrapper);
+    label.innerText = text;
+    let cbox = nt("input", wrapper);
+    cbox.type = "checkbox";
+    cbox.checked = getBoolStorage(storageName);
+    cbox.addEventListener("change", _ => {
+        setBoolStorage(storageName, cbox.checked);
+        onChange(cbox.checked);
+    });
+    let id = "setting_" + storageName;
+    cbox.id = id;
+    label.htmlFor = id;
+    onChange(cbox.checked);
+}
+function settingsGroup(text, parent) {
+    let tag = nt("details", parent);
+    tag.open = true;
+    nt("summary", tag).innerText = text;
+    return tag;
+}
 function manualSettings(parent) {
     let pane = nt("div", parent, "settings");
-    pane.innerText = "Settings go here";
-    // general, emotes, badges
-    // "Dark Theme"
-    // "Use Alternate Favicon"
+    let general = settingsGroup("General", pane);
+    settingsCheckbox("Dark Theme", general, "player_dark", (checked) => {
+        let cls = document.body.classList;
+        cls.toggle("theme-dark", checked);
+        cls.toggle("theme-light", !checked);
+    });
+    settingsCheckbox("Use Alternate Favicon", general, "alt_icon", useAltIcon);
+    // "Show Message Timestamps": ["Always", "Never", "On Hover"]
+    let emotes = settingsGroup("Emotes", pane);
     // "Show Twitch Emotes"
     // "Show FFZ Emotes"
     // "Show 7tv Emotes"
+    // disable animated emotes
+    // ability to manually block specific emotes
+    let badges = settingsGroup("Badges", pane);
     // checkboxes for bit badges, sub badges, twitchcon, event badges, prime/turbo
     // "Hide Uncustomized Sub/Bit Badges"
     // "Use Alternate Default Badges"
