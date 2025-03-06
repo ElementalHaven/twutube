@@ -14,6 +14,8 @@ const pageRenderers = {
 	"userlist": showUsersPage
 };
 
+const ALL_THEMES = ["light", "dark"];
+
 class MessageFragment {
 	text: string;
 	emote?: string;
@@ -67,16 +69,16 @@ class UserSummary {
 }
 
 function initPage() {
-	const pageInfo = getPageType();
-	document.body.className = pageInfo[0] + "-page";
+	const [page, arg] = getPageType();
+	document.body.className = page + "-page";
 
 	// apply theming
 	// done after setting page class so that there can be separate default themes
-	const theme = getTheme(pageInfo[0]);
+	const theme = getTheme(page);
 	document.body.classList.add("theme-" + theme);
 	useAltIcon(getBoolStorage("alt_icon"));
 
-	pageRenderers[pageInfo[0]](pageInfo[1]);
+	pageRenderers[page](arg);
 }
 
 function nt(tagName: keyof HTMLElementTagNameMap, parent: HTMLElement, cls?: string): HTMLElement {
@@ -108,10 +110,7 @@ function getPageType(): [string, string] {
 	let path = document.location.pathname;
 	path = path.substring(basePath.length);
 
-	if(path.length == 0) {
-		// TODO have as the videos page instead if only 1 user
-		return ["userlist", null];
-	}
+	if(path.length == 0) return ["userlist", null];
 
 	let result = path.match(/^([a-zA-Z0-9_]{4,25})\/videos\/?$/i);
 	if(result) return ["videos", result[1]];
@@ -145,7 +144,12 @@ async function showUsersPage() {
 	}
 	try {
 		let users: UserSummary[] = await response.json();
+		if(users.length == 1) {
+			showVideosPage(users[0].name);
+			return;
+		}
 		root.innerText = "";
+		addThemeButton("userlist");
 		for(let user of users) {
 			manualUserTile(user, root);
 		}
@@ -176,6 +180,7 @@ async function showVideosPage(user: string) {
 		let data: SerializedVideos = await response.json();
 		document.title = data.user + "'s Videos - Twutube";
 		root.innerText = "";
+		addThemeButton("videos");
 		let pic = nt("img", root, "profile-pic") as HTMLImageElement;
 		pic.src = `${basePath}users/${id}.jpeg`;
 		nt("h1", root).innerText = data.user + "'s Videos";
@@ -197,8 +202,22 @@ async function showVideosPage(user: string) {
 	}
 }
 
-function addThemeButton() {
-
+function addThemeButton(page: string) {
+	let btn = nt("button", document.body, "btn-theme-toggle");
+	btn.title = "Change Theme";
+	btn.addEventListener("click", _ => {
+		let classes = document.body.classList;
+		for(let cls of classes) {
+			if(cls.startsWith("theme-")) {
+				let idx = ALL_THEMES.indexOf(cls.substring(6));
+				let newTheme = ALL_THEMES[(idx + 1) % ALL_THEMES.length];
+				setBoolStorage(page + "_dark", newTheme == "dark");
+				classes.add("theme-" + newTheme);
+				classes.remove(cls);
+				return;
+			}
+		}
+	});
 }
 
 //* This felt like a great opportunity to learn & use react
