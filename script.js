@@ -2,8 +2,16 @@ import * as React from './Scripts/react/react.js';
 let player = null;
 let chat = null;
 let streamData = null;
+// active timer that will add the next chat message
+let messageTimer = -1;
+let playbackRate = 1;
+// timestamps of the first and last messages currently shown
+let msgFirst = -1, msgLast = -1;
 // change to "/twutube/" once on github
 const basePath = "/";
+// maximum number of chat messages to show at a time
+// older messages will be removed from the DOM as newer ones appear
+const MAX_MESSAGES = 200;
 const pageRenderers = {
     "player": showPlayerPage,
     "videos": showVideosPage,
@@ -46,6 +54,7 @@ class Collection {
 }
 class SerializedVideos {
     user;
+    socials;
     videos;
     collections;
     // map of ids to names
@@ -149,7 +158,7 @@ async function showVideosPage(user) {
     const root = document.body;
     root.innerText = "Loading...";
     const id = user.toLowerCase();
-    const response = await fetch(`${basePath}users/${id}.json`);
+    const response = await fetch(`${basePath}users/${id}.json`, { cache: "no-cache" });
     if (!response.ok) {
         showError(`User ${user} not found`);
         return;
@@ -162,6 +171,16 @@ async function showVideosPage(user) {
         let pic = nt("img", root, "profile-pic");
         pic.src = `${basePath}users/${id}.jpeg`;
         nt("h1", root).innerText = data.user + "'s Videos";
+        if (data.socials) {
+            for (let platform in data.socials) {
+                let link = nt("a", root, "social-link");
+                link.target = "_blank";
+                link.referrerPolicy = "no-referrer";
+                // TODO use appropriate image
+                link.innerText = platform;
+                link.href = data.socials[platform];
+            }
+        }
         for (let collection of data.collections) {
             let tag = nt("div", root, "collection");
             const count = collection.videos.length;
@@ -175,7 +194,8 @@ async function showVideosPage(user) {
             }
         }
     }
-    catch {
+    catch (e) {
+        console.log(e);
         showError(`Failed to parse data for ${user}'s videos and collections`);
     }
 }
@@ -278,6 +298,30 @@ function chatViewSetting(text, parent, name, invert = false, defVal = true) {
         chat.classList.toggle(name, show);
     }, defVal);
 }
+function settingsCombo(text, parent, storageName, onChange, options) {
+    let wrapper = nt("div", parent, "option");
+    let label = nt("label", wrapper);
+    label.innerText = text;
+    let cbox = nt("select", wrapper);
+    for (let opt of options) {
+        let tag = nt("option", cbox);
+        let val = opt.toLowerCase();
+        let idx = val.lastIndexOf(' ');
+        tag.value = val.substring(idx + 1);
+        tag.innerText = opt;
+    }
+    let existing = window.localStorage.getItem(storageName);
+    if (existing)
+        cbox.value = existing;
+    cbox.addEventListener("change", _ => {
+        window.localStorage.setItem(storageName, cbox.value);
+        onChange(cbox.value);
+    });
+    let id = "setting_" + storageName;
+    cbox.id = id;
+    label.htmlFor = id;
+    onChange(cbox.value);
+}
 function settingsGroup(text, parent) {
     let tag = nt("details", parent);
     tag.open = true;
@@ -297,18 +341,30 @@ function manualSettings(parent) {
         document.body.classList.toggle("chat-on-left", onLeft);
     });
     settingsCheckbox("Use Alternate Favicon", general, "alt_icon", useAltIcon);
-    // "Show Message Timestamps": ["Always", "Never", "On Hover"]
+    settingsCombo("Show Message Timestamps", general, "timestamps", val => {
+    }, ["Always", "Never", "On Hover"]);
     let emotes = settingsGroup("Emotes", pane);
     chatViewSetting("Show Twitch Emotes", emotes, "ttv_emotes");
     chatViewSetting("Show FFZ Emotes", emotes, "ffz_emotes");
     chatViewSetting("Show 7tv Emotes", emotes, "7tv_emotes");
-    // ability to manually block specific emotes
+    // TODO ability to manually block specific emotes
     let badges = settingsGroup("Badges", pane);
-    // checkboxes for bit badges, sub badges, twitchcon, event badges, prime/turbo
-    // "Hide Uncustomized Sub/Bit Badges"
-    // "Use Alternate Default Badges"
-    // "Use sub badge in place of founder badge"
-    // ability to manually add badges to block
+    const opts = ["Never", "If Uncustomized", "Always"];
+    settingsCombo("Hide Sub Badges", badges, "hide_subs", val => {
+    }, opts);
+    settingsCombo("Hide Bit Badges", badges, "hide_bits", val => {
+    }, opts);
+    chatViewSetting("Hide Prime/Turbo Badges", badges, "badges_prime", true, false);
+    chatViewSetting("Hide Twitchcon Badges", badges, "badges_con", true, false);
+    chatViewSetting("Hide Online Event Badges", badges, "badges_event", true, false);
+    chatViewSetting("Hide Other Misc Badges", badges, "badges_misc", true, false);
+    settingsCheckbox("Replace Founder with Sub Badge", badges, "replace_founder", rep => {
+        chat.classList.toggle("no-founder-badges", rep);
+    });
+    settingsCheckbox("Use Alternate Default Badges", badges, "alt_badges", use => {
+        chat.classList.toggle("alt-chat-badges", use);
+    });
+    // TODO ability to manually add badges to block
 }
 async function showPlayerPage(videoId) {
     const root = document.body;
@@ -343,7 +399,7 @@ async function showPlayerPage(videoId) {
         radio.name = "tab";
         radio.value = type.toLowerCase();
         radio.title = type;
-        radio.addEventListener("change", ev => {
+        radio.addEventListener("change", _ => {
             sidebar.dataset["tab"] = type;
             label.innerText = type;
         });
@@ -358,6 +414,9 @@ async function showPlayerPage(videoId) {
     else {
         player.innerText = "No Youtube video associated with this Twitch stream";
     }
+}
+function advanceChatTo(curTime) {
+    // TODO implement
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

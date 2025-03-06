@@ -123,9 +123,14 @@ body:not(.chat-on-left) .sidebar {
 	flex: auto;
 	padding: 4px 8px;
 }
-.option input {
+.option input, .option select {
 	flex: 0;
+}
+.option input {
 	margin: 0 8px 0 0;
+}
+.option select {
+	margin: 0 4px 0 0;
 }
 .thumbnail {
 	width: 240px;
@@ -151,13 +156,14 @@ body:not(.chat-on-left) .sidebar {
 	margin: 24px;
 }
 .videos-page > h1 {
-	display: inline;
 	vertical-align: top;
-	margin: 16px;
+	margin: 8px;
 }
 .videos-page .profile-pic {
 	width: 100px;
 	height: 100px;
+	float: left;
+	margin: 0 16px 16px 0;
 }
 .video-tile, .user-tile {
 	display: inline-grid;
@@ -182,7 +188,7 @@ body:not(.chat-on-left) .sidebar {
 	white-space: nowrap;
 }
 .collection:first-of-type {
-	margin-top: 16px;
+	clear: both;
 }
 .collection h1 {
 	margin: 1rem 0;
