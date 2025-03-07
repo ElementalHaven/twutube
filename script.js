@@ -1,12 +1,14 @@
 import * as React from './Scripts/react/react.js';
-let player = null;
+//let player: YT.Player = null;
 let chat = null;
 let streamData = null;
 // active timer that will add the next chat message
 let messageTimer = -1;
 let playbackRate = 1;
-// timestamps of the first and last messages currently shown
+// indices of the first and last messages currently shown
 let msgFirst = -1, msgLast = -1;
+let playAnimations = true;
+let autoplay = false;
 // change to "/twutube/" once on github
 const basePath = "/";
 // maximum number of chat messages to show at a time
@@ -339,7 +341,14 @@ function manualSettings(parent) {
         cls.toggle("theme-dark", checked);
         cls.toggle("theme-light", !checked);
     });
-    chatViewSetting("Disable Animations", general, "anims", true, false);
+    settingsCheckbox("Autoplay Videos", general, "autoplay", auto => autoplay = auto);
+    settingsCheckbox("Disable Animations", general, "hide_anims", still => {
+        playAnimations = !still;
+        let imgs = document.querySelectorAll("img.animated");
+        for (let img of imgs) {
+            // TODO swap extension based on still flag
+        }
+    });
     settingsCheckbox("Chat on Left", general, "chat_on_left", onLeft => {
         document.body.classList.toggle("chat-on-left", onLeft);
     });
@@ -367,6 +376,7 @@ function manualSettings(parent) {
     });
     settingsCheckbox("Use Alternate Default Badges", badges, "alt_badges", use => {
         chat.classList.toggle("alt-chat-badges", use);
+        // TODO implement as multiple versions occupying a single image controlled with background properties
     });
     // TODO ability to manually add badges to block
 }
@@ -389,8 +399,8 @@ async function showPlayerPage(videoId) {
     }
     //let page = playerPage(videoId);
     //document.body.append(page);
-    player = nt("div", document.body, "player-area");
-    player.innerText = "Loading...";
+    let playerArea = nt("div", document.body, "player-area");
+    playerArea.innerText = "Loading...";
     let sidebar = nt("div", document.body, "sidebar");
     sidebar.dataset["tab"] = "Chat";
     let header = nt("div", sidebar, "chat-header");
@@ -422,10 +432,14 @@ async function showPlayerPage(videoId) {
     }
     manualSettings(sidebar);
     if (streamData.ytid) {
+        nt("div", playerArea).id = "player";
+        window["onYouTubeIframeAPIReady"] = initYoutube;
+        nt("script", document.head).src = "https://www.youtube.com/iframe_api";
         // TODO add embed and link up events
+        // https://developers.google.com/youtube/iframe_api_reference
     }
     else {
-        player.innerText = "No Youtube video associated with this Twitch stream";
+        playerArea.innerText = "No Youtube video associated with this Twitch stream";
     }
     const msgCount = streamData.chat.length;
     if (msgCount == 0) {
@@ -485,11 +499,11 @@ function addSingleMessage(msg) {
             let box = nt("div", body);
             let e = nt("img", box, "emote");
             let emote = frag.emote;
-            let idx = emote.indexOf(':');
+            let idx = emote.indexOf('/');
             let plat = idx == -1 ? "ttv" : emote.substring(0, idx);
-            emote = emote.substring(idx + 1);
             e.classList.add(plat + "-emote");
-            e.src = `${basePath}emotes/${plat}/${emote}.png`;
+            // TODO work out extension with animated stuff somehow
+            e.src = `${basePath}emotes/${emote}.png`;
             nt("span", box).innerText = frag.text;
         }
         else {
@@ -509,6 +523,36 @@ function advanceChatTo(curTime) {
     for (let message of streamData.chat) {
         addSingleMessage(message);
     }
+}
+function onPlayerStateChange(ev) {
+    switch (ev.data) {
+        /*
+        case YT.PlayerState.PLAYING:
+            // TODO queue timer for upcoming messages
+            break;
+        case YT.PlayerState.PAUSED:
+        case YT.PlayerState.ENDED:
+            clearTimeout(messageTimer);
+            messageTimer = -1;
+            break;
+        */
+    }
+}
+function initYoutube() {
+    /*
+    player = new YT.Player("player", {
+        height: '',
+        width: '',
+        videoId: streamData.ytid,
+        playerVars: {
+            'playsinline': 1
+        },
+        events: {
+            'onReady': ev => { if(autoplay) ev.target.playVideo(); },
+            'onStateChange': onPlayerStateChange
+        }
+    });
+    */
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

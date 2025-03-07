@@ -294,6 +294,8 @@ body:not(.chat-on-left) .sidebar {
 	margin-bottom: .15rem;
 	margin-right: .3rem;
 	vertical-align: middle;
+	width: 18px;
+	height: 18px;
 }
 .emote {
 	display: none;

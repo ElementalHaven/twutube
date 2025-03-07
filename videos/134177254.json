@@ -13,7 +13,7 @@
 			"fragments": [
 				{
 					"text": "OpieOP",
-					"emote": "ttv:100590"
+					"emote": "ttv/100590"
 				}
 			]
 		},
@@ -37,7 +37,7 @@
 				},
 				{
 					"text": "dimeMMMMM",
-					"emote": "ttv:18291"
+					"emote": "ttv/18291"
 				}
 			]
 		},
@@ -67,8 +67,7 @@
 			"offset": 79,
 			"fragments": [
 				{
-					"text": "tarns you're kinda quiet",
-					"emoticon": null
+					"text": "tarns you're kinda quiet"
 				}
 			]
 		},
@@ -78,8 +77,7 @@
 			"offset": 84,
 			"fragments": [
 				{
-					"text": "yeah",
-					"emoticon": null
+					"text": "yeah"
 				}
 			]
 		}
