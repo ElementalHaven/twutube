@@ -98,10 +98,23 @@ body:not(.chat-on-left) .sidebar {
 	display: none;
 	flex: auto;
 	scrollbar-width: thin;
+	overflow-y: auto;
 	flex-direction: column;
 }
 .sidebar[data-tab=Chat] .chat-area, .sidebar[data-tab=Info] .info-pane, .sidebar[data-tab=Settings] .settings {
 	display: flex;
+}
+.info-pane {
+	padding: 8px;
+	gap: 16px;
+	align-items: start;
+}
+.info-pane .title {
+	font-weight: bold;
+	font-size: 1.5em;
+}
+.info-pane .desc {
+	font-size: 1em;
 }
 .settings {
 	padding: 4px 0;
@@ -125,12 +138,10 @@ body:not(.chat-on-left) .sidebar {
 }
 .option input, .option select {
 	flex: 0;
+	margin: 0 6px 0 0;
 }
 .option input {
-	margin: 0 8px 0 0;
-}
-.option select {
-	margin: 0 4px 0 0;
+	margin-right: 10px;
 }
 .thumbnail {
 	width: 240px;

@@ -43,6 +43,9 @@ class Video {
 }
 class Stream extends Video {
     description;
+    // friendly name
+    // same as the game values in SerializedVideos but for a standalone json
+    gameName;
     ytid;
     chat;
 }
@@ -369,7 +372,7 @@ function manualSettings(parent) {
 async function showPlayerPage(videoId) {
     const root = document.body;
     root.innerText = "Loading...";
-    const response = await fetch(`${basePath}videos/${videoId}.json`);
+    const response = await fetch(`${basePath}videos/${videoId}.json`, { cache: "no-cache" });
     if (!response.ok) {
         showError("Failed to fetch video metadata");
         return;
@@ -408,8 +411,18 @@ async function showPlayerPage(videoId) {
     }
     chat = nt("div", sidebar, "chat-area");
     chat.innerText = "Chat goes here";
+    let info = nt("div", sidebar, "info-pane");
+    nt("div", info, "title").innerText = streamData.title;
+    nt("div", info, "desc").innerText = streamData.description || "No Description Provided";
+    nt("div", info).innerText = "Recorded: " + streamData.created;
+    nt("div", info).innerText = "Duration: " + streamData.length;
+    if (streamData.game) {
+        nt("div", info).innerText = "Game: " + streamData.gameName;
+        nt("img", info, "boxart").src = `${basePath}boxart/${streamData.game}.jpg`;
+    }
     manualSettings(sidebar);
     if (streamData.ytid) {
+        // TODO add embed and link up events
     }
     else {
         player.innerText = "No Youtube video associated with this Twitch stream";
