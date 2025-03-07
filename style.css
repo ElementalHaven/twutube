@@ -259,3 +259,57 @@ body:not(.chat-on-left) .sidebar {
 		opacity: 1;
 	}
 }
+.chat-line {
+	word-break: break-word;
+	padding: .25rem 0 .25rem .5rem;
+	font-size: 1.3rem;
+	line-height: 2rem;
+	display: flex;
+	flex-wrap: nowrap;
+	width: 100%;
+	align-items: flex-start;
+}
+.chat-line img {
+	vertical-align: top;
+}
+.chat-line div {
+	display: inline;
+}
+.chat-line .message > :first-child {
+	padding-right: .5rem;
+}
+.chat-line .author {
+	font-weight: 700;
+}
+.chat-line .timestamp {
+	white-space: nowrap;
+	font-size: 1.2rem;
+	line-height: 1.5;
+	margin-right: 0.5rem;
+}
+.chat-area[data-timestamps="never"] .timestamp, .chat-area[data-timestamps="hover"] .chat-line:not(:hover) .timestamp {
+	display: none;
+}
+.chat-badge {
+	margin-bottom: .15rem;
+	margin-right: .3rem;
+	vertical-align: middle;
+}
+.emote {
+	display: none;
+	overflow-y: visible;
+}
+.message div {
+	display: inline-block;
+	height: 1.3rem;
+}
+.ttv-emote {
+	width: 28px;
+	height: 28px;
+}
+.show_ttv_emotes .ttv-emote + *, .show_ffv_emotes .ffz-emote + *, .show_7tv_emotes .stv-emote + * {
+	display: none;
+}
+.show_ttv_emotes .ttv-emote, .show_ffv_emotes .ffz-emote, .show_7tv_emotes .stv-emote {
+	display: initial;
+}

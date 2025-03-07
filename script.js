@@ -24,7 +24,7 @@ class MessageFragment {
     emote;
 }
 class ChatMessage {
-    author;
+    user;
     color;
     // offset in seconds
     offset;
@@ -345,6 +345,7 @@ function manualSettings(parent) {
     });
     settingsCheckbox("Use Alternate Favicon", general, "alt_icon", useAltIcon);
     settingsCombo("Show Message Timestamps", general, "timestamps", val => {
+        chat.dataset["timestamps"] = val;
     }, ["Always", "Never", "On Hover"]);
     let emotes = settingsGroup("Emotes", pane);
     chatViewSetting("Show Twitch Emotes", emotes, "ttv_emotes");
@@ -410,7 +411,6 @@ async function showPlayerPage(videoId) {
             radio.checked = true;
     }
     chat = nt("div", sidebar, "chat-area");
-    chat.innerText = "Chat goes here";
     let info = nt("div", sidebar, "info-pane");
     nt("div", info, "title").innerText = streamData.title;
     nt("div", info, "desc").innerText = streamData.description || "No Description Provided";
@@ -427,9 +427,88 @@ async function showPlayerPage(videoId) {
     else {
         player.innerText = "No Youtube video associated with this Twitch stream";
     }
+    const msgCount = streamData.chat.length;
+    if (msgCount == 0) {
+        chat.innerText = "No chat to display";
+    }
+    else {
+        advanceChatTo(streamData.chat[msgCount - 1].offset);
+    }
+}
+function formatTimestamp(time) {
+    let secs = time % 60;
+    let str = secs.toString();
+    if (secs < 10)
+        str = '0' + str;
+    str = ':' + str;
+    time = (time - secs) / 60;
+    if (time > 0) {
+        let mins = time % 60;
+        str = mins + str;
+        time = (time - mins) / 60;
+        if (time > 0) {
+            if (mins < 10)
+                str = '0' + str;
+            str = time + ':' + str;
+        }
+    }
+    else {
+        str = '0' + str;
+    }
+    return str;
+}
+function addSingleMessage(msg) {
+    // not currently supported
+    if (msg.system)
+        return;
+    // not using nt to ensure line is complete first
+    let line = document.createElement("div");
+    line.classList.add("chat-line");
+    nt("div", line, "timestamp").innerText = formatTimestamp(msg.offset);
+    let wrap = nt("div", line);
+    let badgeList = nt("span", wrap);
+    if (msg.badges) {
+        for (let badge of msg.badges) {
+            let b = nt("img", badgeList, "chat-badge");
+            b.alt = badge;
+            // TODO more work may be required based on user settings
+            b.src = `${basePath}badges/${badge}.png`;
+        }
+    }
+    let user = nt("span", wrap, "author");
+    user.innerText = msg.user;
+    user.style.color = msg.color;
+    let body = nt("div", wrap, "message");
+    nt("span", body).innerText = ':';
+    for (let frag of msg.fragments) {
+        if (frag.emote) {
+            let box = nt("div", body);
+            let e = nt("img", box, "emote");
+            let emote = frag.emote;
+            let idx = emote.indexOf(':');
+            let plat = idx == -1 ? "ttv" : emote.substring(0, idx);
+            emote = emote.substring(idx + 1);
+            e.classList.add(plat + "-emote");
+            e.src = `${basePath}emotes/${plat}/${emote}.png`;
+            nt("span", box).innerText = frag.text;
+        }
+        else {
+            nt("span", body, "fragment").innerText = frag.text;
+        }
+    }
+    chat.append(line);
+}
+function indexOfAnyAt(time) {
+    //streamData.chat.
 }
 function advanceChatTo(curTime) {
-    // TODO implement
+    // TODO implement properly
+    while (chat.childElementCount) {
+        chat.firstChild.remove();
+    }
+    for (let message of streamData.chat) {
+        addSingleMessage(message);
+    }
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map
