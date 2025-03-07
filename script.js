@@ -1,5 +1,5 @@
-import * as React from './Scripts/react/react.js';
-//let player: YT.Player = null;
+//import * as React from 'react';
+let player = null;
 let chat = null;
 let streamData = null;
 // active timer that will add the next chat message
@@ -221,38 +221,46 @@ function addThemeButton(page) {
         }
     });
 }
-//* This felt like a great opportunity to learn & use react
+/* This felt like a great opportunity to learn & use react
 // but the mountain of issues I'm experiencing makes me want to curl up in a ball
 // everything out there expects a specific setup
 // and assumes you're already well aquainted with that stuff -Liz (3/2/25)
 // I feel like I'm so close. It properly gives me a .js file and resolves the react import,
 // but then it says React.createElement is not a function
-function playerPage(videoId) {
-    return (React.createElement(React.Fragment, null,
-        React.createElement("div", { class: "player-area" },
-            "Embed of video ",
-            videoId,
-            " here"),
-        React.createElement("div", { class: "sidebar", "data-tab": "Chat" },
-            React.createElement("div", { class: "chat-header" },
-                React.createElement("span", null, "Chat on Videos"),
-                React.createElement("input", { type: "radio", name: "tab", title: "Chat" }),
-                React.createElement("input", { type: "radio", name: "tab", title: "Info" }),
-                React.createElement("input", { type: "radio", name: "tab", title: "Settings" })),
-            React.createElement("div", { class: "chat-area" }),
-            React.createElement("div", null, "Stream info here(title, description, game, boxart, length, date)"),
-            React.createElement("div", null, "Settings here"))));
+function playerPage(videoId: string) {
+    return (
+        <>
+            <div class="player-area">Embed of video {videoId} here</div>
+            <div class="sidebar" data-tab="Chat">
+                <div class="chat-header">
+                    <span>Chat on Videos</span>
+                    <input type="radio" name="tab" title="Chat" />
+                    <input type="radio" name="tab" title="Info" />
+                    <input type="radio" name="tab" title="Settings" />
+                </div>
+                <div class="chat-area">
+                </div>
+                <div>Stream info here(title, description, game, boxart, length, date)</div>
+                <div>Settings here</div>
+            </div>
+        </>
+    );
 }
+
 // even if I can't use react atm, it at least lets me visualize the resulting code
 // and maybe one day in the future I'll actually get it sorted -Liz (3/3/25)
-function videoTile(video, id, games) {
-    return (React.createElement("div", { class: "video-tile" },
-        React.createElement("div", { class: "thumbnail", style: { background: `url("${basePath}videos/${id}.jpg")` } },
-            React.createElement("div", null, video.length),
-            React.createElement("div", null, video.created)),
-        React.createElement("div", { class: "boxart", style: { background: `url("${basePath}boxart/${video.game}.jpg")` } }),
-        React.createElement("div", { class: "title", title: video.title }, "video.title"),
-        React.createElement("div", null, games[video.game])));
+function videoTile(video: Video, id: string, games: Map<string, string>) {
+    return (
+        <div class="video-tile">
+            <div class="thumbnail" style={{background: `url("${basePath}videos/${id}.jpg")`}}>
+                <div>{video.length}</div>
+                <div>{video.created}</div>
+            </div>
+            <div class="boxart" style={{background: `url("${basePath}boxart/${video.game}.jpg")`}}></div>
+            <div class="title" title={video.title}>video.title</div>
+            <div>{games[video.game]}</div>
+        </div>
+    );
 }
 //*/
 function manualVideoTile(video, id, games, parent) {
@@ -526,7 +534,6 @@ function advanceChatTo(curTime) {
 }
 function onPlayerStateChange(ev) {
     switch (ev.data) {
-        /*
         case YT.PlayerState.PLAYING:
             // TODO queue timer for upcoming messages
             break;
@@ -535,11 +542,9 @@ function onPlayerStateChange(ev) {
             clearTimeout(messageTimer);
             messageTimer = -1;
             break;
-        */
     }
 }
 function initYoutube() {
-    /*
     player = new YT.Player("player", {
         height: '',
         width: '',
@@ -548,11 +553,11 @@ function initYoutube() {
             'playsinline': 1
         },
         events: {
-            'onReady': ev => { if(autoplay) ev.target.playVideo(); },
+            'onReady': ev => { if (autoplay)
+                ev.target.playVideo(); },
             'onStateChange': onPlayerStateChange
         }
     });
-    */
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

@@ -1,0 +1,8 @@
+{
+	"version": "0.5.0",
+	"name": "twutube",
+	"private": true,
+	"dependencies": {
+		"@types/youtube": "^0.1.0"
+	}
+}

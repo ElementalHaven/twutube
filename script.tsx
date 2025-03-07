@@ -1,6 +1,6 @@
-﻿import * as React from './Scripts/react/react.js';
+﻿//import * as React from 'react';
 
-//let player: YT.Player = null;
+let player: YT.Player = null;
 let chat: HTMLElement = null;
 let streamData: Stream = null;
 // active timer that will add the next chat message
@@ -246,7 +246,7 @@ function addThemeButton(page: string) {
 	});
 }
 
-//* This felt like a great opportunity to learn & use react
+/* This felt like a great opportunity to learn & use react
 // but the mountain of issues I'm experiencing makes me want to curl up in a ball
 // everything out there expects a specific setup
 // and assumes you're already well aquainted with that stuff -Liz (3/2/25)
@@ -586,7 +586,6 @@ function advanceChatTo(curTime: number) {
 
 function onPlayerStateChange(ev) {
 	switch(ev.data) {
-		/*
 		case YT.PlayerState.PLAYING:
 			// TODO queue timer for upcoming messages
 			break;
@@ -595,12 +594,10 @@ function onPlayerStateChange(ev) {
 			clearTimeout(messageTimer);
 			messageTimer = -1;
 			break;
-		*/
 	}
 }
 
 function initYoutube() {
-	/*
 	player = new YT.Player("player", {
 		height: '',
 		width: '',
@@ -613,7 +610,6 @@ function initYoutube() {
 			'onStateChange': onPlayerStateChange
 		}
 	});
-	*/
 }
 
 window["initPage"] = initPage;
