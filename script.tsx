@@ -6,13 +6,14 @@ let streamData: Stream = null;
 // active timer that will add the next chat message
 let messageTimer: number = -1;
 let playbackRate: number = 1;
-// indices of the first and last messages currently shown
-let msgFirst = -1, msgLast = -1;
+// index of the last message currently shown
+let msgLast = -1;
+let timeLast = -1;
 let playAnimations = true;
 let autoplay = false;
+let msgCount = 0;
 
-// change to "/twutube/" once on github
-const basePath = "/";
+const basePath = window.location.hostname.includes("github") ? "/twutube/" : "/";
 
 // maximum number of chat messages to show at a time
 // older messages will be removed from the DOM as newer ones appear
@@ -496,7 +497,7 @@ async function showPlayerPage(videoId: string) {
 		playerArea.innerText = "No Youtube video associated with this Twitch stream";
 	}
 
-	const msgCount = streamData.chat.length;
+	msgCount = streamData.chat.length;
 	if(msgCount == 0) {
 		chat.innerText = "No chat to display";
 	} else {
@@ -568,31 +569,63 @@ function addSingleMessage(msg: ChatMessage) {
 		}
 	}
 	chat.append(line);
+	while(chat.childElementCount > MAX_MESSAGES) {
+		chat.firstElementChild.remove();
+	}
 }
 
-function indexOfAnyAt(time: number) {
-	//streamData.chat.
-}
-
-function advanceChatTo(curTime: number) {
-	// TODO implement properly
+function clearChat() {
 	while(chat.childElementCount) {
 		chat.firstChild.remove();
 	}
-	for(let message of streamData.chat) {
-		addSingleMessage(message);
+	timeLast = msgLast = -1;
+}
+
+function advanceChatTo(curTime: number) {
+	if(msgCount == 0) return;
+
+	for(let i = msgLast + 1; i < msgCount; ++i) {
+		let message = streamData.chat[i];
+		if(message.offset <= curTime) {
+			addSingleMessage(message);
+			msgLast = i;
+		} else {
+			return;
+		}
 	}
 }
 
-function onPlayerStateChange(ev) {
+function queueUpcomingMessages() {
+	if(msgCount == 0) return;
+
+	// do this for safety reasons
+	unqueueUpcomingMessages();
+	// current time in seconds
+	const now = player.getCurrentTime();
+	if(now < timeLast) clearChat();
+	advanceChatTo(now);
+	let next = msgLast + 1;
+	if(next < msgCount) {
+		let timeOfNext = streamData.chat[next].offset;
+		let ms = (timeOfNext - now) * 1000;
+		messageTimer = setTimeout(queueUpcomingMessages, ms);
+	}
+	timeLast = now;
+}
+
+function unqueueUpcomingMessages() {
+	clearTimeout(messageTimer);
+	messageTimer = -1;
+}
+
+function onPlayerStateChange(ev: YT.OnStateChangeEvent) {
 	switch(ev.data) {
 		case YT.PlayerState.PLAYING:
-			// TODO queue timer for upcoming messages
+			queueUpcomingMessages();
 			break;
 		case YT.PlayerState.PAUSED:
 		case YT.PlayerState.ENDED:
-			clearTimeout(messageTimer);
-			messageTimer = -1;
+			unqueueUpcomingMessages();
 			break;
 	}
 }
@@ -607,7 +640,11 @@ function initYoutube() {
 		},
 		events: {
 			'onReady': ev => { if(autoplay) ev.target.playVideo(); },
-			'onStateChange': onPlayerStateChange
+			'onStateChange': onPlayerStateChange,
+			'onPlaybackRateChange': ev => {
+				playbackRate = ev.data;
+				queueUpcomingMessages();
+			}
 		}
 	});
 }
