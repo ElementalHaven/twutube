@@ -13,7 +13,7 @@
 			"fragments": [
 				{
 					"text": "OpieOP",
-					"emote": "ttv/100590"
+					"emote": 0
 				}
 			]
 		},
@@ -37,7 +37,7 @@
 				},
 				{
 					"text": "dimeMMMMM",
-					"emote": "ttv/18291"
+					"emote": 1
 				}
 			]
 		},
@@ -80,6 +80,16 @@
 					"text": "yeah"
 				}
 			]
+		}
+	],
+	"images": [
+		{
+			"path": "ttv/100590",
+			"classes": [ "ttv-emote" ]
+		},
+		{
+			"path": "ttv/18291",
+			"classes": [ "ttv-emote", "sub-emote" ]
 		}
 	]
 }

@@ -309,9 +309,9 @@ body:not(.chat-on-left) .sidebar {
 	width: 28px;
 	height: 28px;
 }
-.show_ttv_emotes .ttv-emote + *, .show_ffv_emotes .ffz-emote + *, .show_7tv_emotes .stv-emote + * {
+.show_ttv_emotes .ttv-emote + *, .show_ffv_emotes .ffz-emote + *, .show_7tv_emotes .stv-emote + *, .show_bttv_emotes .bttv-emote + * {
 	display: none;
 }
-.show_ttv_emotes .ttv-emote, .show_ffv_emotes .ffz-emote, .show_7tv_emotes .stv-emote {
+.show_ttv_emotes .ttv-emote, .show_ffv_emotes .ffz-emote, .show_7tv_emotes .stv-emote, .show_bttv_emotes .bttv-emote {
 	display: initial;
 }

@@ -1,6 +1,7 @@
 // types and methods shared between twutube and the github action for generating json files
 export class MessageFragment {
     text;
+    // index of the emote in the image list
     emote;
 }
 export class ChatMessage {
@@ -8,6 +9,7 @@ export class ChatMessage {
     color;
     // offset in seconds
     offset;
+    // indice of the badges in the image list
     badges;
     fragments;
     system;
@@ -19,6 +21,13 @@ export class Video {
     created;
     length;
 }
+/* unfinished prototyping for better establishing badges/emotes */
+export class ChatImage {
+    title;
+    path;
+    // will contain stuff like "ffz-emote", "sub-badge", and "animated"
+    classes;
+}
 export class Stream extends Video {
     description;
     // friendly name
@@ -26,6 +35,7 @@ export class Stream extends Video {
     gameName;
     ytid;
     chat;
+    images;
 }
 export class Collection {
     name;

@@ -350,8 +350,10 @@ function manualSettings(parent: HTMLElement) {
 	settingsCheckbox("Disable Animations", general, "hide_anims", still => {
 		playAnimations = !still;
 		let imgs = document.querySelectorAll("img.animated") as NodeListOf<HTMLImageElement>;
+		const ext = playAnimations ? "gif" : "png";
 		for(let img of imgs) {
-			// TODO swap extension based on still flag
+			let src = img.src;
+			img.src = src.substring(0, src.length - 3) + ext;
 		}
 	});
 	settingsCheckbox("Chat on Left", general, "chat_on_left", onLeft => {
@@ -365,6 +367,7 @@ function manualSettings(parent: HTMLElement) {
 	let emotes = settingsGroup("Emotes", pane);
 	chatViewSetting("Show Twitch Emotes", emotes, "ttv_emotes");
 	chatViewSetting("Show FFZ Emotes", emotes, "ffz_emotes");
+	chatViewSetting("Show BTTV Emotes", emotes, "bttv_emotes");
 	chatViewSetting("Show 7TV Emotes", emotes, "7tv_emotes");
 	// TODO ability to manually block specific emotes
 
@@ -447,11 +450,10 @@ async function showPlayerPage(videoId: string) {
 	manualSettings(sidebar);
 
 	if(streamData.ytid) {
+		// https://developers.google.com/youtube/iframe_api_reference
 		nt("div", playerArea).id = "player";
 		window["onYouTubeIframeAPIReady"] = initYoutube;
 		(nt("script", document.head) as HTMLScriptElement).src = "https://www.youtube.com/iframe_api";
-		// TODO add embed and link up events
-		// https://developers.google.com/youtube/iframe_api_reference
 	} else {
 		playerArea.innerText = "No Youtube video associated with this Twitch stream";
 	}
@@ -480,9 +482,11 @@ function addSingleMessage(msg: ChatMessage) {
 	if(msg.badges) {
 		for(let badge of msg.badges) {
 			let b = nt("img", badgeList, "chat-badge") as HTMLImageElement;
-			b.alt = badge;
-			// TODO more work may be required based on user settings
-			b.src = `${basePath}badges/${badge}.png`;
+			const idat = streamData.images[badge];
+			b.alt = idat.title;
+			b.classList.add(...idat.classes);
+			let ext = playAnimations && idat.classes.includes("animated") ? "gif" : "png";
+			b.src = `${basePath}badges/${idat.path}.${ext}`;
 		}
 	}
 
@@ -493,15 +497,14 @@ function addSingleMessage(msg: ChatMessage) {
 	let body = nt("div", wrap, "message");
 	nt("span", body).innerText = ':';
 	for(let frag of msg.fragments) {
-		if(frag.emote) {
+		if(frag.emote !== undefined) {
 			let box = nt("div", body);
 			let e = nt("img", box, "emote") as HTMLImageElement;
-			let emote = frag.emote;
-			let idx = emote.indexOf('/');
-			let plat = idx == -1 ? "ttv" : emote.substring(0, idx);
-			e.classList.add(plat + "-emote");
-			// TODO work out extension with animated stuff somehow
-			e.src = `${basePath}emotes/${emote}.png`;
+			e.title = frag.text;
+			let emote = streamData.images[frag.emote];
+			e.classList.add(...emote.classes);
+			let ext = playAnimations && emote.classes.includes("animated") ? "gif" : "png";
+			e.src = `${basePath}emotes/${emote}.${ext}`;
 			nt("span", box).innerText = frag.text;
 		} else {
 			nt("span", body, "fragment").innerText = frag.text;

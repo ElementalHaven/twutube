@@ -3,7 +3,8 @@
 
 export class MessageFragment {
 	text: string;
-	emote?: string;
+	// index of the emote in the image list
+	emote?: number;
 }
 
 export class ChatMessage {
@@ -11,7 +12,8 @@ export class ChatMessage {
 	color: string;
 	// offset in seconds
 	offset: number;
-	badges: string[];
+	// indice of the badges in the image list
+	badges: number[];
 	fragments: MessageFragment[];
 	system?: boolean;
 }
@@ -24,6 +26,14 @@ export class Video {
 	length: number;
 }
 
+/* unfinished prototyping for better establishing badges/emotes */
+export class ChatImage {
+	title?: string;
+	path: string;
+	// will contain stuff like "ffz-emote", "sub-badge", and "animated"
+	classes: string[];
+}
+
 export class Stream extends Video {
 	description: string;
 	// friendly name
@@ -31,6 +41,7 @@ export class Stream extends Video {
 	gameName: string;
 	ytid: string;
 	chat: ChatMessage[];
+	images: ChatImage[];
 }
 
 export class Collection {
