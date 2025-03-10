@@ -1,10 +1,10 @@
 //import * as React from 'react';
+import { formatTimestamp } from "./shared.js";
 let player = null;
 let chat = null;
 let streamData = null;
 // active timer that will add the next chat message
 let messageTimer = -1;
-let playbackRate = 1;
 // index of the last message currently shown
 let msgLast = -1;
 let timeLast = -1;
@@ -22,55 +22,6 @@ const pageRenderers = {
     "userlist": showUsersPage
 };
 const ALL_THEMES = ["light", "dark"];
-class MessageFragment {
-    text;
-    emote;
-}
-class ChatMessage {
-    user;
-    color;
-    // offset in seconds
-    offset;
-    badges;
-    fragments;
-    system;
-}
-class Video {
-    // game ids
-    game;
-    title;
-    // MMM d, YYYY
-    created;
-    // [h:]m:ss
-    length;
-}
-class Stream extends Video {
-    description;
-    // friendly name
-    // same as the game values in SerializedVideos but for a standalone json
-    gameName;
-    ytid;
-    chat;
-}
-class Collection {
-    name;
-    // ids of all videos pre-sorted
-    // playlists oldest to newest; all videos newest to oldest
-    videos;
-}
-class SerializedVideos {
-    user;
-    socials;
-    videos;
-    collections;
-    // map of ids to names
-    games;
-}
-class UserSummary {
-    name;
-    videos;
-    playlists;
-}
 function initPage() {
     const [page, arg] = getPageType();
     document.body.className = page + "-page";
@@ -187,6 +138,15 @@ async function showVideosPage(user) {
                 link.href = data.socials[platform];
             }
         }
+        // I hate this so much. js is just shitting itself failing to iterate over it any way I try
+        // I can do Map.prototype.forEach.call(); I can do new Map(Object.entries());
+        // whatever I do it always says video is undefined
+        for (let k in data.videos) {
+            let video = data.videos[k];
+            video.created = new Date(video.created);
+        }
+        // results in Jan 1, 1970 or the like for en-US users, which is what I was using for strings
+        const dateFmt = Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
         for (let collection of data.collections) {
             let tag = nt("div", root, "collection");
             const count = collection.videos.length;
@@ -196,7 +156,7 @@ async function showVideosPage(user) {
             let container = nt("div", tag);
             for (let vidId of collection.videos) {
                 const video = data.videos[vidId];
-                manualVideoTile(video, vidId, data.games, container);
+                manualVideoTile(video, vidId, data.games, container, dateFmt);
             }
         }
     }
@@ -264,14 +224,20 @@ function videoTile(video: Video, id: string, games: Map<string, string>) {
     );
 }
 //*/
-function manualVideoTile(video, id, games, parent) {
+function manualVideoTile(video, id, games, parent, fmt) {
     let tile = nt("a", parent, "video-tile");
     tile.href = `${basePath}videos/${id}`;
     let thumb = nt("div", tile, "thumbnail");
     thumb.style.background = `url("${basePath}videos/${id}.jpg")`;
     /* change these 2 to be below title? */
-    nt("div", thumb).innerText = video.length;
-    nt("div", thumb).innerText = video.created;
+    nt("div", thumb).innerText = formatTimestamp(video.length);
+    let dateStr = video.created;
+    // this has to stay like this for typescript validation reasons
+    // even though it's guaranteed to always be a Date now
+    // I don't feel like disabling typescript validation for this specific bit either -Liz (3/9/25)
+    if (typeof dateStr != "string")
+        dateStr = fmt.format(dateStr);
+    nt("div", thumb).innerText = dateStr;
     if (video.game) {
         nt("div", tile, "boxart").style.background = `url("${basePath}boxart/${video.game}.jpg")`;
     }
@@ -458,28 +424,6 @@ async function showPlayerPage(videoId) {
         advanceChatTo(streamData.chat[msgCount - 1].offset);
     }
 }
-function formatTimestamp(time) {
-    let secs = time % 60;
-    let str = secs.toString();
-    if (secs < 10)
-        str = '0' + str;
-    str = ':' + str;
-    time = (time - secs) / 60;
-    if (time > 0) {
-        let mins = time % 60;
-        str = mins + str;
-        time = (time - mins) / 60;
-        if (time > 0) {
-            if (mins < 10)
-                str = '0' + str;
-            str = time + ':' + str;
-        }
-    }
-    else {
-        str = '0' + str;
-    }
-    return str;
-}
 function addSingleMessage(msg) {
     // not currently supported
     if (msg.system)
@@ -557,7 +501,7 @@ function queueUpcomingMessages() {
     let next = msgLast + 1;
     if (next < msgCount) {
         let timeOfNext = streamData.chat[next].offset;
-        let ms = (timeOfNext - now) * 1000;
+        let ms = (timeOfNext - now) * 1000 / player.getPlaybackRate();
         messageTimer = setTimeout(queueUpcomingMessages, ms);
     }
     timeLast = now;
@@ -589,10 +533,7 @@ function initYoutube() {
             'onReady': ev => { if (autoplay)
                 ev.target.playVideo(); },
             'onStateChange': onPlayerStateChange,
-            'onPlaybackRateChange': ev => {
-                playbackRate = ev.data;
-                queueUpcomingMessages();
-            }
+            'onPlaybackRateChange': queueUpcomingMessages
         }
     });
 }

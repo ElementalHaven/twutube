@@ -1,11 +1,12 @@
 ﻿//import * as React from 'react';
 
+import { ChatMessage, formatTimestamp, SerializedVideos, Stream, UserSummary, Video } from "./shared.js";
+
 let player: YT.Player = null;
 let chat: HTMLElement = null;
 let streamData: Stream = null;
 // active timer that will add the next chat message
 let messageTimer: number = -1;
-let playbackRate: number = 1;
 // index of the last message currently shown
 let msgLast = -1;
 let timeLast = -1;
@@ -27,62 +28,6 @@ const pageRenderers = {
 };
 
 const ALL_THEMES = ["light", "dark"];
-
-class MessageFragment {
-	text: string;
-	emote?: string;
-}
-
-class ChatMessage {
-	user: string;
-	color: string;
-	// offset in seconds
-	offset: number;
-	badges: string[];
-	fragments: MessageFragment[];
-	system?: boolean;
-}
-
-class Video {
-	// game ids
-	game: string;
-	title: string;
-	// MMM d, YYYY
-	created: string;
-	// [h:]m:ss
-	length: string;
-}
-
-class Stream extends Video {
-	description: string;
-	// friendly name
-	// same as the game values in SerializedVideos but for a standalone json
-	gameName: string;
-	ytid: string;
-	chat: ChatMessage[];
-}
-
-class Collection {
-	name: string;
-	// ids of all videos pre-sorted
-	// playlists oldest to newest; all videos newest to oldest
-	videos: string[];
-}
-
-class SerializedVideos {
-	user: string;
-	socials: Map<string, string>;
-	videos: Map<string, Video>;
-	collections: Collection[];
-	// map of ids to names
-	games: Map<string, string>;
-}
-
-class UserSummary {
-	name: string;
-	videos: number;
-	playlists: number;
-}
 
 function initPage() {
 	const [page, arg] = getPageType();
@@ -210,7 +155,16 @@ async function showVideosPage(user: string) {
 				link.href = data.socials[platform];
 			}
 		}
+		// I hate this so much. js is just shitting itself failing to iterate over it any normal way
+		// I can do Map.prototype.forEach.call(); I can do new Map(Object.entries());
+		// whatever I do it always says video is undefined -Liz (3/9/25)
+		for(let k in data.videos) {
+			let video = data.videos[k];
+			video.created = new Date(video.created);
+		}
 
+		// results in Jan 1, 1970 or the like for en-US users, which is what I was using for strings
+		const dateFmt = Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
 		for(let collection of data.collections) {
 			let tag = nt("div", root, "collection");
 			const count = collection.videos.length;
@@ -220,7 +174,7 @@ async function showVideosPage(user: string) {
 			let container = nt("div", tag);
 			for(let vidId of collection.videos) {
 				const video = data.videos[vidId];
-				manualVideoTile(video, vidId, data.games, container);
+				manualVideoTile(video, vidId, data.games, container, dateFmt);
 			}
 		}
 	} catch(e) {
@@ -290,14 +244,19 @@ function videoTile(video: Video, id: string, games: Map<string, string>) {
 }
 //*/
 
-function manualVideoTile(video: Video, id: string, games: Map<string, string>, parent: HTMLElement) {
+function manualVideoTile(video: Video, id: string, games: Map<string, string>, parent: HTMLElement, fmt: Intl.DateTimeFormat) {
 	let tile = nt("a", parent, "video-tile") as HTMLAnchorElement;
 	tile.href = `${basePath}videos/${id}`;
 	let thumb = nt("div", tile, "thumbnail");
 	thumb.style.background = `url("${basePath}videos/${id}.jpg")`;
 	/* change these 2 to be below title? */
-	nt("div", thumb).innerText = video.length;
-	nt("div", thumb).innerText = video.created;
+	nt("div", thumb).innerText = formatTimestamp(video.length);
+	let dateStr = video.created;
+	// this has to stay like this for typescript validation reasons
+	// even though it's guaranteed to always be a Date now
+	// I don't feel like disabling typescript validation for this specific bit either -Liz (3/9/25)
+	if(typeof dateStr != "string") dateStr = fmt.format(dateStr);
+	nt("div", thumb).innerText = dateStr;
 	if(video.game) {
 		nt("div", tile, "boxart").style.background = `url("${basePath}boxart/${video.game}.jpg")`;
 	}
@@ -406,7 +365,7 @@ function manualSettings(parent: HTMLElement) {
 	let emotes = settingsGroup("Emotes", pane);
 	chatViewSetting("Show Twitch Emotes", emotes, "ttv_emotes");
 	chatViewSetting("Show FFZ Emotes", emotes, "ffz_emotes");
-	chatViewSetting("Show 7tv Emotes", emotes, "7tv_emotes");
+	chatViewSetting("Show 7TV Emotes", emotes, "7tv_emotes");
 	// TODO ability to manually block specific emotes
 
 	let badges = settingsGroup("Badges", pane);
@@ -505,26 +464,6 @@ async function showPlayerPage(videoId: string) {
 	}
 }
 
-function formatTimestamp(time: number) {
-	let secs = time % 60;
-	let str = secs.toString();
-	if(secs < 10) str = '0' + str;
-	str = ':' + str;
-	time = (time - secs) / 60;
-	if(time > 0) {
-		let mins = time % 60;
-		str = mins + str;
-		time = (time - mins) / 60;
-		if(time > 0) {
-			if(mins < 10) str = '0' + str;
-			str = time + ':' + str;
-		}
-	} else {
-		str = '0' + str;
-	}
-	return str;
-}
-
 function addSingleMessage(msg: ChatMessage) {
 	// not currently supported
 	if(msg.system) return;
@@ -607,7 +546,7 @@ function queueUpcomingMessages() {
 	let next = msgLast + 1;
 	if(next < msgCount) {
 		let timeOfNext = streamData.chat[next].offset;
-		let ms = (timeOfNext - now) * 1000;
+		let ms = (timeOfNext - now) * 1000 / player.getPlaybackRate();
 		messageTimer = setTimeout(queueUpcomingMessages, ms);
 	}
 	timeLast = now;
@@ -641,10 +580,7 @@ function initYoutube() {
 		events: {
 			'onReady': ev => { if(autoplay) ev.target.playVideo(); },
 			'onStateChange': onPlayerStateChange,
-			'onPlaybackRateChange': ev => {
-				playbackRate = ev.data;
-				queueUpcomingMessages();
-			}
+			'onPlaybackRateChange': queueUpcomingMessages
 		}
 	});
 }
