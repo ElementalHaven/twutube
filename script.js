@@ -440,7 +440,7 @@ function addSingleMessage(msg) {
         for (let badge of msg.badges) {
             let b = nt("img", badgeList, "chat-badge");
             const idat = streamData.images[badge];
-            b.alt = idat.title;
+            b.title = idat.title;
             b.classList.add(...idat.classes);
             let ext = playAnimations && idat.classes.includes("animated") ? "gif" : "png";
             b.src = `${basePath}badges/${idat.path}.${ext}`;

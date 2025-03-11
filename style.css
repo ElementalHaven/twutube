@@ -316,3 +316,6 @@ body:not(.chat-on-left) .sidebar {
 .show_ttv_emotes .ttv-emote, .show_ffv_emotes .ffz-emote, .show_7tv_emotes .stv-emote, .show_bttv_emotes .bttv-emote {
 	display: initial;
 }
+.hide_badges_prime .prime-badge {
+	display: none;
+}
