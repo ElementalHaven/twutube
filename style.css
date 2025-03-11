@@ -267,6 +267,7 @@ body:not(.chat-on-left) .sidebar {
 	display: flex;
 	flex-wrap: nowrap;
 	width: 100%;
+	box-sizing: border-box;
 	align-items: flex-start;
 }
 .chat-line img {

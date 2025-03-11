@@ -459,7 +459,7 @@ function addSingleMessage(msg) {
             let emote = streamData.images[frag.emote];
             e.classList.add(...emote.classes);
             let ext = playAnimations && emote.classes.includes("animated") ? "gif" : "png";
-            e.src = `${basePath}emotes/${emote}.${ext}`;
+            e.src = `${basePath}emotes/${emote.path}.${ext}`;
             nt("span", box).innerText = frag.text;
         }
         else {
