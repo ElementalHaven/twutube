@@ -228,7 +228,7 @@ function manualVideoTile(video, id, games, parent, fmt) {
     let tile = nt("a", parent, "video-tile");
     tile.href = `${basePath}videos/${id}`;
     let thumb = nt("div", tile, "thumbnail");
-    thumb.style.background = `url("${basePath}videos/${id}.jpg")`;
+    thumb.style.backgroundImage = `url("${basePath}videos/${id}.jpg")`;
     /* change these 2 to be below title? */
     nt("div", thumb).innerText = formatTimestamp(video.length);
     let dateStr = video.created;
@@ -342,8 +342,10 @@ function manualSettings(parent) {
     let badges = settingsGroup("Badges", pane);
     const opts = ["Never", "If Uncustomized", "Always"];
     settingsCombo("Hide Sub Badges", badges, "hide_subs", val => {
+        chat.dataset["hide_subs"] = val;
     }, opts);
     settingsCombo("Hide Bit Badges", badges, "hide_bits", val => {
+        chat.dataset["hide_bits"] = val;
     }, opts);
     chatViewSetting("Hide Prime/Turbo Badges", badges, "badges_prime", true, false);
     chatViewSetting("Hide Twitchcon Badges", badges, "badges_con", true, false);
@@ -401,14 +403,16 @@ async function showPlayerPage(videoId) {
     chat = nt("div", sidebar, "chat-area");
     let info = nt("div", sidebar, "info-pane");
     nt("div", info, "title").innerText = streamData.title;
-    nt("div", info, "desc").innerText = streamData.description || "No Description Provided";
-    nt("div", info).innerText = "Recorded: " + streamData.created;
-    nt("div", info).innerText = "Duration: " + streamData.length;
+    nt("div", info, "desc").innerText = streamData.description?.replace(/&#39;/g, "'") ?? "No Description Provided";
+    let date = new Date(streamData.created).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    nt("div", info).innerText = "Recorded: " + date;
+    nt("div", info).innerText = "Duration: " + formatTimestamp(streamData.length);
     if (streamData.game) {
         nt("div", info).innerText = "Game: " + streamData.gameName;
         nt("img", info, "boxart").src = `${basePath}boxart/${streamData.game}.jpg`;
     }
     manualSettings(sidebar);
+    msgCount = streamData.chat.length;
     if (streamData.ytid) {
         // https://developers.google.com/youtube/iframe_api_reference
         nt("div", playerArea).id = "player";
@@ -417,13 +421,12 @@ async function showPlayerPage(videoId) {
     }
     else {
         playerArea.innerText = "No Youtube video associated with this Twitch stream";
+        if (msgCount) {
+            advanceChatTo(streamData.chat[msgCount - 1].offset);
+        }
     }
-    msgCount = streamData.chat.length;
     if (msgCount == 0) {
         chat.innerText = "No chat to display";
-    }
-    else {
-        advanceChatTo(streamData.chat[msgCount - 1].offset);
     }
 }
 function addSingleMessage(msg) {
@@ -433,7 +436,9 @@ function addSingleMessage(msg) {
     // not using nt to ensure line is complete first
     let line = document.createElement("div");
     line.classList.add("chat-line");
-    nt("div", line, "timestamp").innerText = formatTimestamp(msg.offset);
+    let ts = nt("div", line, "timestamp");
+    ts.innerText = formatTimestamp(msg.offset);
+    ts.addEventListener("click", ev => player?.seekTo(msg.offset, true));
     let wrap = nt("div", line);
     let badgeList = nt("span", wrap);
     if (msg.badges) {
@@ -539,6 +544,8 @@ function initYoutube() {
             'onPlaybackRateChange': queueUpcomingMessages
         }
     });
+    // remove the "Loading..." text
+    document.querySelector(".player-area").firstChild.remove();
 }
 window["initPage"] = initPage;
 //# sourceMappingURL=script.js.map

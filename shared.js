@@ -45,10 +45,13 @@ export class Collection {
 }
 export class SerializedVideos {
     user;
+    // used as Map<string, string>
     socials;
+    // used as Map<string, Video>
     videos;
     collections;
     // map of ids to names
+    // used as Map<string, string>
     games;
 }
 export class UserSummary {
