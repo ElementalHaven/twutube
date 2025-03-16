@@ -11,6 +11,7 @@ let timeLast = -1;
 let playAnimations = true;
 let autoplay = false;
 let msgCount = 0;
+let atBottom = true;
 const basePath = window.location.hostname.includes("github") ? "/twutube/" : "/";
 // maximum number of chat messages to show at a time
 // older messages will be removed from the DOM as newer ones appear
@@ -449,6 +450,12 @@ async function showPlayerPage(videoId) {
             radio.checked = true;
     }
     chat = nt("div", sidebar, "chat-area");
+    // track and maintain chat being scrolled to bottom
+    chat.addEventListener("scroll", _ => {
+        atBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 1;
+    });
+    window.addEventListener("resize", ev => { if (atBottom)
+        scrollToBottom(); });
     let info = nt("div", sidebar, "info-pane");
     nt("div", info, "title").innerText = streamData.title;
     nt("div", info, "desc").innerText = streamData.description?.replace(/&#39;/g, "'") ?? "No Description Provided";
@@ -477,6 +484,9 @@ async function showPlayerPage(videoId) {
         chat.classList.add("no-chat");
         chat.innerText = "No chat to display";
     }
+}
+function scrollToBottom() {
+    chat.scrollTop = chat.scrollHeight - chat.clientHeight;
 }
 function addSingleMessage(msg) {
     // not currently supported
@@ -515,6 +525,10 @@ function addSingleMessage(msg) {
             let ext = playAnimations && emote.classes.includes("animated") ? "gif" : "png";
             e.src = `${basePath}emotes/${emote.path}.${ext}`;
             nt("span", box).innerText = frag.text;
+            // images are treated as 0 height until loaded 
+            // which causes the page to no longer be at the bottom once they load
+            if (atBottom)
+                e.addEventListener("load", scrollToBottom, { once: true });
         }
         else {
             nt("span", body, "fragment").innerText = frag.text;
@@ -524,6 +538,8 @@ function addSingleMessage(msg) {
     while (chat.childElementCount > MAX_MESSAGES) {
         chat.firstElementChild.remove();
     }
+    if (atBottom)
+        scrollToBottom();
 }
 function clearChat() {
     while (chat.childElementCount) {

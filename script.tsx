@@ -13,6 +13,7 @@ let timeLast = -1;
 let playAnimations = true;
 let autoplay = false;
 let msgCount = 0;
+let atBottom = true;
 
 const basePath = window.location.hostname.includes("github") ? "/twutube/" : "/";
 
@@ -484,6 +485,12 @@ async function showPlayerPage(videoId: string) {
 
 	chat = nt("div", sidebar, "chat-area");
 
+	// track and maintain chat being scrolled to bottom
+	chat.addEventListener("scroll", _ => {
+		atBottom = chat.scrollHeight - chat.clientHeight <= chat.scrollTop + 1;
+	});
+	window.addEventListener("resize", ev => { if(atBottom) scrollToBottom(); });
+
 	let info = nt("div", sidebar, "info-pane");
 	nt("div", info, "title").innerText = streamData.title;
 	nt("div", info, "desc").innerText = streamData.description?.replace(/&#39;/g, "'") ?? "No Description Provided";
@@ -514,6 +521,10 @@ async function showPlayerPage(videoId: string) {
 		chat.classList.add("no-chat");
 		chat.innerText = "No chat to display";
 	}
+}
+
+function scrollToBottom() {
+	chat.scrollTop = chat.scrollHeight - chat.clientHeight;
 }
 
 function addSingleMessage(msg: ChatMessage) {
@@ -558,6 +569,9 @@ function addSingleMessage(msg: ChatMessage) {
 			let ext = playAnimations && emote.classes.includes("animated") ? "gif" : "png";
 			e.src = `${basePath}emotes/${emote.path}.${ext}`;
 			nt("span", box).innerText = frag.text;
+			// images are treated as 0 height until loaded 
+			// which causes the page to no longer be at the bottom once they load
+			if(atBottom) e.addEventListener("load", scrollToBottom, { once: true });
 		} else {
 			nt("span", body, "fragment").innerText = frag.text;
 		}
@@ -566,6 +580,8 @@ function addSingleMessage(msg: ChatMessage) {
 	while(chat.childElementCount > MAX_MESSAGES) {
 		chat.firstElementChild.remove();
 	}
+
+	if(atBottom) scrollToBottom();
 }
 
 function clearChat() {
