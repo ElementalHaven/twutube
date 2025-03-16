@@ -24,7 +24,8 @@ const pageRenderers = {
 	"player": showPlayerPage,
 	"videos": showVideosPage,
 	"error": showErrorPage,
-	"userlist": showUsersPage
+	"userlist": showUsersPage,
+	"boxart": listBoxart
 };
 
 const ALL_THEMES = ["light", "dark"];
@@ -42,7 +43,7 @@ function initPage() {
 	pageRenderers[page](arg);
 }
 
-function nt(tagName: keyof HTMLElementTagNameMap, parent: HTMLElement, cls?: string): HTMLElement {
+function nt(tagName: keyof HTMLElementTagNameMap, parent: ParentNode, cls?: string): HTMLElement {
 	let elem = document.createElement(tagName);
 	if(cls) elem.className = cls;
 	parent.append(elem);
@@ -79,6 +80,8 @@ function getPageType(): [string, string] {
 	result = path.match(/^videos\/(\d+)\/?$/);
 	if(result) return ["player", result[1]];
 
+	if(path == "boxarttest.html") return ["boxart", null];
+
 	return ["error", path];
 }
 
@@ -113,6 +116,46 @@ async function showUsersPage() {
 		addThemeButton("userlist");
 		for(let user of users) {
 			manualUserTile(user, root);
+		}
+	} catch {
+		showError(`Failed to parse data for user list`);
+	}
+}
+
+async function listBoxart() {
+	const root = document.body;
+	root.innerText = "Loading...";
+	const response = await fetch(basePath + "users.json");
+	if(!response.ok) {
+		showError("Failed to fetch list of users");
+		return;
+	}
+	try {
+		let users: UserSummary[] = await response.json();
+		root.innerText = "";
+		addThemeButton("boxart");
+		let allArt = [];
+		for(let user of users) {
+			// async issues may occur. duplicates are fine
+			const name = user.name.toLowerCase();
+			const path = `${basePath}users/${name}.json`;
+			console.log(`Getting user page "${path}" to extract games list`);
+			fetch(path).then(res => res.json()).then((data: SerializedVideos) => {
+				let frag = document.createDocumentFragment();
+				const games = Object.keys(data.games);
+				console.log(games.length + " games for " + name);
+				for(let game of games) {
+					if(!allArt.includes(game)) {
+						allArt.push(game);
+						let boxart = nt("img", frag, "boxart") as HTMLImageElement;
+						boxart.alt = game;
+						boxart.title = data.games[game];
+						boxart.src = `${basePath}boxart/${game}.jpg`;
+					}
+				}
+				console.log("Adding fragment with " + frag.childElementCount + " children");
+				root.append(frag);
+			});
 		}
 	} catch {
 		showError(`Failed to parse data for user list`);
@@ -166,11 +209,12 @@ async function showVideosPage(user: string) {
 		// results in Jan 1, 1970 or the like for en-US users, which is what I was using for strings
 		const dateFmt = Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
 		for(let collection of data.collections) {
-			let tag = nt("div", root, "collection");
+			let tag = nt("details", root, "collection") as HTMLDetailsElement;
+			if(collection.name == "All Videos") tag.open = true;
 			const count = collection.videos.length;
 			// no need for special pluralization logic.
 			// if there was only 1 video it wouldn't be a collection
-			nt("h1", tag).innerText = `${collection.name} (${count} videos)`;
+			nt("summary", tag).innerText = `${collection.name} (${count} videos)`;
 			let container = nt("div", tag);
 			for(let vidId of collection.videos) {
 				const video = data.videos[vidId];
@@ -257,9 +301,11 @@ function manualVideoTile(video: Video, id: string, games: object, parent: HTMLEl
 	// I don't feel like disabling typescript validation for this specific bit either -Liz (3/9/25)
 	if(typeof dateStr != "string") dateStr = fmt.format(dateStr);
 	nt("div", thumb).innerText = dateStr;
+	/* I forgot this even existed. it seems to be visible only rarely and mess with the layout
 	if(video.game) {
 		nt("div", tile, "boxart").style.background = `url("${basePath}boxart/${video.game}.jpg")`;
 	}
+	*/
 	let title = nt("div", tile, "title");
 	title.title = video.title;
 	title.innerText = video.title;
@@ -397,7 +443,8 @@ async function showPlayerPage(videoId: string) {
 	const root = document.body;
 	root.innerText = "Loading...";
 	const response = await fetch(`${basePath}videos/${videoId}.json`, { cache: "no-cache" });
-	if(!response.ok) {
+	// content type check is because IIS is insisting on returning 200 with error page customized
+	if(!response.ok || response.headers.get("content-type") == "text/html") {
 		showError("Failed to fetch video metadata");
 		return;
 	}
@@ -464,6 +511,7 @@ async function showPlayerPage(videoId: string) {
 	}
 
 	if(msgCount == 0) {
+		chat.classList.add("no-chat");
 		chat.innerText = "No chat to display";
 	}
 }

@@ -1,0 +1,278 @@
+﻿<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>Twutube</title>
+		<script>
+			let ytjs = null;
+			let twini = null;
+
+			function discardEvent(ev) {
+				ev.stopPropagation();
+				ev.preventDefault();
+			}
+
+			function init() {
+				window.addEventListener("drop", handleFileDrop, false);
+				window.addEventListener("dragenter", discardEvent);
+				window.addEventListener("dragover", discardEvent, false);
+			}
+
+			/**
+			 * @param pane {HTMLElement}
+			 */
+			function clearPane(pane) {
+				while(pane.firstChild) {
+					pane.firstChild.remove();
+				}
+			}
+
+			function nt(tagName, parent, cls) {
+				let tag = document.createElement(tagName);
+				if(cls) tag.className = cls;
+				if(parent) parent.append(tag);
+				return tag;
+			}
+
+			function getMatch(tw) {
+				// no need to do work
+				let prematch = ytjs.find(ent => ent.id == tw.ytid);
+				if(prematch) return prematch;
+
+                let timeItems = ytjs.filter(ent => (Math.abs(ent.duration - tw.duration) < 2));
+				let titleItems = ytjs.filter(ent => (ent.title == tw.title));
+				let perfect = timeItems.filter(o => titleItems.includes(o));
+				if(perfect.length > 0) {
+					// there shouldnt be more than one perfect match
+					return perfect[0];
+                }
+                const timeCount = timeItems.length;
+				const titleCount = titleItems.length;
+
+				if(titleCount == 1) {
+					let titlePick = titleItems[0];
+					console.log(`Pairing ${tw.title} despite time mismatch: ${tw.duration} and ${titlePick.duration}`);
+					return titlePick;
+				}
+
+				if(titleCount > 1) {
+					console.error("Multiple items with title " + tw.title + ". returning first");
+					// no perfect matches. should probably use longest if possible, or at least one that's longer
+					return titleCount[0];
+                }
+
+				// no title matches, likely rewritten, missing/extra punctuation or typos
+				// never assume based on time alone.
+                let timeStr = tw.title.match(/\[([0-9:]+)\]/);
+                if(timeStr) {
+                    timeStr = timeStr[1];
+					for(let item of timeItems) {
+						if(!item.title.includes(timeStr)) continue;
+                        let idx = item.title.indexOf("Speedrun");
+                        if(idx != -1) {
+                            let game = item.title.substring(0, idx - 1);
+                            if(tw.title.startsWith(game)) {
+								return item;
+                            }
+                        }
+                    }
+                }
+            }
+
+			function attemptFill() {
+				if(!ytjs || !twini) return;
+
+				// FIXME rework to base around duration first, confirm on title
+				// prompt user if multiple possibilities
+				for(let tw of twini) {
+					let match = null;
+					if(tw.ytid) {
+                        match = ytjs.find(ent => ent.id == tw.ytid);
+                        tw.tag.classList.add("mapped");
+					} else {
+						match = getMatch(tw);
+					}
+					if(!match) {
+
+                    }
+					if(match) {
+						tw.json = match;
+						if(match.ini) {
+							console.error("Attempt to double map an entry");
+							console.error(`${match.title}(${match.id}) <-> ${tw.title}(${tw.twid})`);
+							console.error(`${match.title}(${match.id}) <-> ${match.ini.title}(${match.ini.twid})`);
+						}
+						match.ini = tw;
+						if(!tw.ytid) {
+							tw.ytid = match.id;
+							tw.tag.lastElementChild.innerText = tw.twid + "=" + tw.ytid;
+						}
+						tw.tag.classList.add("mapped");
+						match.tag.classList.add("mapped");
+					}
+				}
+
+                let ytf = document.querySelectorAll("#json-in .mapped").length;
+				let twf = document.querySelectorAll("#ini-out .mapped").length;
+				let ytp = Math.floor(ytf * 100 / ytjs.length);
+				let twp = Math.floor(twf * 100 / twini.length);
+                console.log(`Youtube list completion: ${ytf}/${ytjs.length} (${ytp}%)`);
+				console.log(`Twitch list completion: ${twf}/${twini.length} (${twp}%)`);
+				if(ytf != twf) {
+					// FIXME theres a mismatch. somethings double mapped or who knows
+                }
+				const outFile = document.getElementById("ini-out").innerText;
+				document.querySelector("button").style.removeProperty("display");
+			}
+
+			/**
+			 * @param txt {string}
+			 */
+			function loadTxt(txt) {
+				let lines = txt.split('\n');
+				for(let i = 0; i < lines.length; ++i) {
+					let line = lines[i];
+					if(line.endsWith('\r')) lines[i] = line.substring(0, line.length - 1);
+				}
+				let items = [];
+				let frag = document.createDocumentFragment();
+				for(let i = 0; i < lines.length; i += 2) {
+					let details = lines[i];
+					if(!details.startsWith('#')) {
+						break;
+					}
+
+					let mapping = lines[i + 1].split('=');
+					let idx1 = details.indexOf('-') + 2;
+					let idx2 = details.lastIndexOf('-') - 1;
+					const title = details.substring(idx1, idx2);
+					let time = 0;
+					let clock = details.substring(idx2 + 3).split(':');
+					for(let unit of clock) {
+						time = time * 60 + parseInt(unit);
+					}
+					let block = nt("div", frag, "item");
+					nt("div", block).innerText = details;
+					nt("div", block).innerText = lines[i + 1];
+					items.push({
+						title: title,
+						duration: time,
+						twid: mapping[0],
+						ytid: mapping[1],
+						comment: details,
+						json: null,
+						tag: block
+					});
+
+				}
+				let dst = document.getElementById("ini-out");
+				clearPane(dst);
+				dst.append(frag);
+				twini = items;
+				attemptFill();
+			}
+
+			function formatTime(time) {
+				const secs = time % 60;
+				time = (time - secs) / 60;
+				const mins = time % 60;
+				time = (time - mins) / 60;
+
+				let str = secs.toString();
+				if(secs < 10) str = '0' + str;
+				str = mins + ':' + str;
+				if(mins < 10) str = '0' + str;
+				str = time + ':' + str;
+				if(time < 10) str = '0' + str;
+				return str;
+			}
+
+			function loadJson(items) {
+				let frag = document.createDocumentFragment();
+				for(let i = 0; i < items.length; ++i) {
+					let item = items[i];
+					let block = nt("div", frag, "item");
+					if(item.title.includes('�')) {
+                        item.title = item.title.replace('�', '—');
+                    }
+					nt("div", block).innerText = `# ${item.title} - ${formatTime(item.duration)}`;
+					nt("div", block).innerText = item.id;
+					item.ini = null;
+					item.tag = block;
+				}
+				let dst = document.getElementById("json-in");
+				clearPane(dst);
+				dst.append(frag);
+				ytjs = items;
+				attemptFill();
+			}
+
+			/**
+			 * 
+			 * @param ev {DragEvent}
+			 */
+			function handleFileDrop(ev) {
+				discardEvent(ev);
+				const file = ev.dataTransfer.files[0];
+				if(file) {
+					if(file.name.endsWith(".json")) {
+						file.text().then(txt => JSON.parse(txt)).then(json => loadJson(json));
+					} else if(file.name.endsWith(".ini")) {
+						file.text().then(loadTxt);
+					}
+				}
+			}
+
+			function userInteraction() {
+				document.querySelector("button").style.display = "none";
+				navigator.clipboard.writeText(document.getElementById("ini-out").innerText);
+            }
+		</script>
+		<style>
+			body {
+				display: flex;
+				flex-direction: row;
+				margin: 0;
+				height: 100vh;
+				background: #CCC;
+			}
+			body > div {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				overflow-y: scroll;
+				gap: 2px;
+			}
+			.item {
+				display: flex;
+				flex-direction: column;
+				padding: 6px 8px;
+				gap: 2px;
+				background: #FFF;
+			}
+			.item :first-child {
+				color: #060;
+			}
+			.mapped {
+				background: #CFC;
+			}
+            button {
+                z-index: 5;
+                position: fixed;
+                top: 50vh;
+                left: 50vw;
+                font-weight: bold;
+                font-size: 48px;
+                width: 400px;
+                height: 400px;
+                text-align: center;
+                transform: translate(-50%, -50%);
+            }
+		</style>
+	</head>
+	<body onload="init()">
+		<div id="json-in">json will go here</div>
+		<div id="ini-out">ini will go here</div>
+		<button onclick="userInteraction()" style="display: none">CLICK HERE BECAUSE DUMB RESTRICTIONS</button>
+	</body>
+</html>
