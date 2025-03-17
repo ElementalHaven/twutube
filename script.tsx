@@ -483,8 +483,11 @@ async function showPlayerPage(videoId: string) {
 	let label = nt("span", header);
 	label.innerText = "Chat";
 	const types = ["Chat", "Info", "Settings"];
-	for(let type of types) {
+	const bgPaths = ["chat", "game", "gear"];
+	for(let i = 0; i < 3; ++i) {
+		const type = types[i];
 		let radio = nt("input", header) as HTMLInputElement;
+		radio.style.backgroundImage = `url("${basePath}img/${bgPaths[i]}-ink.svg")`;
 		radio.type = "radio";
 		radio.name = "tab";
 		radio.value = type.toLowerCase();

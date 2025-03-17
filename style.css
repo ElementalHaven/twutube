@@ -99,20 +99,6 @@ body:not(.chat-on-left) .sidebar {
 .chat-header input:hover {
 	opacity: 0.75;
 }
-input[value="chat"] {
-	background: url("/img/chat-ink.svg");
-}
-input[value="settings"] {
-	background: url("/img/gear-ink.svg");
-}
-input[value="info"] {
-	background: url("/img/game-ink.svg");
-}
-/*
-.chat-header input:checked {
-	background: #0F0;
-}
-*/
 .chat-header ~ div {
 	display: none;
 	flex: auto;
@@ -320,7 +306,7 @@ input[value="info"] {
 }
 .chat-line {
 	word-break: break-word;
-	padding: .25rem 0 .25rem .5rem;
+	padding: .25rem .25rem .25rem .5rem;
 	font-size: 1.3rem;
 	line-height: 2rem;
 	display: flex;
