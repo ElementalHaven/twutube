@@ -5,10 +5,58 @@
 		<meta charset="utf-8" />
 		<link rel="shortcut icon" sizes="16x16" href="/favicon-16b.png" />
 		<link rel="shortcut icon" sizes="32x32" href="/favicon-32b.png" />
-		<script>__REACT_DEVTOOLS_GLOBAL_HOOK__ = true;</script>
-		<script type="module" src="/script.js"></script>
-		<link rel="stylesheet" href="/style.css" />
+		<style>
+            .no-js {
+                width: 100vw;
+                height: 100vh;
+                display: flex;
+                margin: 0;
+                justify-content: center;
+                align-items: center;
+                text-align: center;
+                font-size: 4em;
+            }
+
+            .no-js::after {
+                content: "This page requires Javascript";
+                /* the animation is so the user isn't shown an error while the js loads and runs */
+                animation: 0.4s errview;
+            }
+
+            @keyframes errview {
+                from {
+                    opacity: 0;
+                }
+
+                95% {
+                    opacity: 0;
+                }
+
+                to {
+                    opacity: 1;
+                }
+            }
+        </style>
 		<title>Twutube</title>
 	</head>
-	<body class="no-js" onload="initPage()"></body>
+	<body class="no-js">
+		<script>
+			__REACT_DEVTOOLS_GLOBAL_HOOK__ = true;
+			const basePath = window.location.hostname.includes("github") ? "/twutube/" : "/";
+
+            document.querySelector("style")?.remove();
+
+			let css = document.createElement("link");
+			css.rel = "stylesheet"
+            css.href = basePath + "style.css";
+            document.head.append(css);
+
+			let js = document.createElement("script");
+			js.type = "module";
+			js.src = basePath + "script.js";
+			js.addEventListener("load", ev => { window["initPage"]() }, { once: true });
+			document.head.append(js);
+		</script>
+
+	</body>
 </html>
