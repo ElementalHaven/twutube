@@ -179,6 +179,13 @@ input[value="info"] {
 	position: relative;
 	background-size: cover;
 }
+.thumbnail img {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+}
 .thumbnail div {
 	background: rgba(0, 0, 0, 0.75);
 	color: #FFF;
@@ -186,11 +193,11 @@ input[value="info"] {
 	padding: 0.25rem 0.5rem;
 	font-size: 1.3rem;
 }
-.thumbnail div:first-child {
+.thumbnail div:first-of-type {
 	top: var(--thumb-margin);
 	left: var(--thumb-margin);
 }
-.thumbnail div:last-child {
+.thumbnail div:last-of-type {
 	bottom: var(--thumb-margin);
 	right: var(--thumb-margin);
 }

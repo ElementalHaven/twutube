@@ -1,10 +1,11 @@
 ﻿//import * as React from 'react';
 
-import { ChatMessage, formatTimestamp, SerializedVideos, Stream, UserSummary, Video } from "./shared.js";
+import { ChatMessage, Collection, formatTimestamp, SerializedVideos, Stream, UserSummary, Video } from "./shared.js";
 
 let player: YT.Player = null;
 let chat: HTMLElement = null;
 let streamData: Stream = null;
+let vidPageJson: SerializedVideos = null;
 // active timer that will add the next chat message
 let messageTimer: number = -1;
 // index of the last message currently shown
@@ -30,6 +31,9 @@ const pageRenderers = {
 };
 
 const ALL_THEMES = ["light", "dark"];
+
+// results in Jan 1, 1970 or the like for en-US users, which is what I was using for strings
+const DATE_FORMAT = Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
 
 function initPage() {
 	const [page, arg] = getPageType();
@@ -172,6 +176,13 @@ function showErrorPage(requested: string) {
 	showError("You're on a 404 page as a result of trying to access " + requested);
 }
 
+function fillCollection(collection: Collection, container: HTMLElement) {
+	for(let vidId of collection.videos) {
+		const video = vidPageJson.videos[vidId];
+		manualVideoTile(video, vidId, container);
+	}
+}
+
 async function showVideosPage(user: string) {
 	const root = document.body;
 	root.innerText = "Loading...";
@@ -182,44 +193,44 @@ async function showVideosPage(user: string) {
 		return;
 	}
 	try {
-		let data: SerializedVideos = await response.json();
-		document.title = data.user + "'s Videos - Twutube";
+		vidPageJson = await response.json();
+		document.title = vidPageJson.user + "'s Videos - Twutube";
 		root.innerText = "";
 		addThemeButton("videos");
 		let pic = nt("img", root, "profile-pic") as HTMLImageElement;
 		pic.src = `${basePath}users/${id}.jpeg`;
-		nt("h1", root).innerText = data.user + "'s Videos";
-		if(data.socials) {
-			for(let platform in data.socials) {
+		nt("h1", root).innerText = vidPageJson.user + "'s Videos";
+		if(vidPageJson.socials) {
+			for(let platform in vidPageJson.socials) {
 				let link = nt("a", root, "social-link") as HTMLAnchorElement;
 				link.target = "_blank";
 				link.referrerPolicy = "no-referrer";
 				// TODO use appropriate image
 				link.innerText = platform;
-				link.href = data.socials[platform];
+				link.href = vidPageJson.socials[platform];
 			}
 		}
 		// I hate this so much. js is just shitting itself failing to iterate over it any normal way
 		// I can do Map.prototype.forEach.call(); I can do new Map(Object.entries());
 		// whatever I do it always says video is undefined -Liz (3/9/25)
-		for(let k in data.videos) {
-			let video = data.videos[k];
+		for(let k in vidPageJson.videos) {
+			let video = vidPageJson.videos[k];
 			video.created = new Date(video.created);
 		}
 
-		// results in Jan 1, 1970 or the like for en-US users, which is what I was using for strings
-		const dateFmt = Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" });
-		for(let collection of data.collections) {
+		for(let collection of vidPageJson.collections) {
 			let tag = nt("details", root, "collection") as HTMLDetailsElement;
-			if(collection.name == "All Videos") tag.open = true;
+			const open = collection.name == "All Videos";
+			tag.open = open;
 			const count = collection.videos.length;
 			// no need for special pluralization logic.
 			// if there was only 1 video it wouldn't be a collection
 			nt("summary", tag).innerText = `${collection.name} (${count} videos)`;
 			let container = nt("div", tag);
-			for(let vidId of collection.videos) {
-				const video = data.videos[vidId];
-				manualVideoTile(video, vidId, data.games, container, dateFmt);
+			if(open) {
+				fillCollection(collection, container);
+			} else {
+				tag.addEventListener("toggle", _ => fillCollection(collection, container), { once: true });
 			}
 		}
 	} catch(e) {
@@ -289,18 +300,20 @@ function videoTile(video: Video, id: string, games: Map<string, string>) {
 }
 //*/
 
-function manualVideoTile(video: Video, id: string, games: object, parent: HTMLElement, fmt: Intl.DateTimeFormat) {
+function manualVideoTile(video: Video, id: string, parent: HTMLElement) {
 	let tile = nt("a", parent, "video-tile") as HTMLAnchorElement;
 	tile.href = `${basePath}videos/${id}`;
 	let thumb = nt("div", tile, "thumbnail");
-	thumb.style.backgroundImage = `url("${basePath}videos/${id}.jpg")`;
+	let img = nt("img", thumb) as HTMLImageElement;
+	img.loading = "lazy";
+	img.src = `${basePath}videos/${id}.jpg`;
 	/* change these 2 to be below title? */
 	nt("div", thumb).innerText = formatTimestamp(video.length);
 	let dateStr = video.created;
 	// this has to stay like this for typescript validation reasons
 	// even though it's guaranteed to always be a Date now
 	// I don't feel like disabling typescript validation for this specific bit either -Liz (3/9/25)
-	if(typeof dateStr != "string") dateStr = fmt.format(dateStr);
+	if(typeof dateStr != "string") dateStr = DATE_FORMAT.format(dateStr);
 	nt("div", thumb).innerText = dateStr;
 	/* I forgot this even existed. it seems to be visible only rarely and mess with the layout
 	if(video.game) {
@@ -310,7 +323,7 @@ function manualVideoTile(video: Video, id: string, games: object, parent: HTMLEl
 	let title = nt("div", tile, "title");
 	title.title = video.title;
 	title.innerText = video.title;
-	if(video.game) nt("div", tile).innerText = games[video.game];
+	if(video.game) nt("div", tile).innerText = vidPageJson.games[video.game];
 }
 
 function manualUserTile(user: UserSummary, parent: HTMLElement) {
@@ -499,7 +512,9 @@ async function showPlayerPage(videoId: string) {
 	nt("div", info).innerText = "Duration: " + formatTimestamp(streamData.length);
 	if(streamData.game) {
 		nt("div", info).innerText = "Game: " + streamData.gameName;
-		(nt("img", info, "boxart") as HTMLImageElement).src = `${basePath}boxart/${streamData.game}.jpg`;
+		let boxart = nt("img", info, "boxart") as HTMLImageElement;
+		boxart.loading = "lazy";
+		boxart.src = `${basePath}boxart/${streamData.game}.jpg`;
 	}
 
 	manualSettings(sidebar);
