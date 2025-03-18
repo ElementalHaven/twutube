@@ -3,40 +3,38 @@
 <html>
 	<head>
 		<meta charset="utf-8" />
-		<link rel="shortcut icon" sizes="16x16" href="/favicon-16b.png" />
-		<link rel="shortcut icon" sizes="32x32" href="/favicon-32b.png" />
 		<style>
-            .no-js {
-                width: 100vw;
-                height: 100vh;
-                display: flex;
-                margin: 0;
-                justify-content: center;
-                align-items: center;
-                text-align: center;
-                font-size: 4em;
-            }
+			.no-js {
+				width: 100vw;
+				height: 100vh;
+				display: flex;
+				margin: 0;
+				justify-content: center;
+				align-items: center;
+				text-align: center;
+				font-size: 4em;
+			}
 
-            .no-js::after {
-                content: "This page requires Javascript";
-                /* the animation is so the user isn't shown an error while the js loads and runs */
-                animation: 0.4s errview;
-            }
+			.no-js::after {
+				content: "This page requires Javascript";
+				/* the animation is so the user isn't shown an error while the js loads and runs */
+				animation: 0.4s errview;
+			}
 
-            @keyframes errview {
-                from {
-                    opacity: 0;
-                }
+			@keyframes errview {
+				from {
+					opacity: 0;
+				}
 
-                95% {
-                    opacity: 0;
-                }
+				95% {
+					opacity: 0;
+				}
 
-                to {
-                    opacity: 1;
-                }
-            }
-        </style>
+				to {
+					opacity: 1;
+				}
+			}
+		</style>
 		<title>Twutube</title>
 	</head>
 	<body class="no-js">
@@ -44,12 +42,22 @@
 			__REACT_DEVTOOLS_GLOBAL_HOOK__ = true;
 			const basePath = window.location.hostname.includes("github") ? "/twutube/" : "/";
 
-            document.querySelector("style")?.remove();
+			document.querySelector("style")?.remove();
+
+			let addIcon = function(size) {
+				let link = document.createElement("link");
+				link.rel = "shortcut icon";
+				link.sizes = size + 'x' + size;
+				link.href = `${basePath}favicon-${size}b.png`;
+				document.head.append(link);
+			}
+			addIcon(16);
+			addIcon(32);
 
 			let css = document.createElement("link");
 			css.rel = "stylesheet"
-            css.href = basePath + "style.css";
-            document.head.append(css);
+			css.href = basePath + "style.css";
+			document.head.append(css);
 
 			let js = document.createElement("script");
 			js.type = "module";
@@ -57,6 +65,5 @@
 			js.addEventListener("load", ev => { window["initPage"]() }, { once: true });
 			document.head.append(js);
 		</script>
-
 	</body>
 </html>
