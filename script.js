@@ -473,8 +473,7 @@ async function showPlayerPage(videoId) {
     let info = nt("div", sidebar, "info-pane");
     nt("div", info, "title").innerText = streamData.title;
     nt("div", info, "desc").innerText = streamData.description?.replace(/&#39;/g, "'") ?? "No Description Provided";
-    let date = new Date(streamData.created).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
-    nt("div", info).innerText = "Recorded: " + date;
+    nt("div", info).innerText = "Recorded: " + DATE_FORMAT.format(new Date(streamData.created));
     nt("div", info).innerText = "Duration: " + formatTimestamp(streamData.length);
     if (streamData.game) {
         nt("div", info).innerText = "Game: " + streamData.gameName;
