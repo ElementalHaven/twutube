@@ -39,6 +39,7 @@ export class Stream extends Video {
 	// friendly name
 	// same as the game values in SerializedVideos but for a standalone json
 	gameName: string;
+	globalOffset?: number;
 	ytid: string;
 	chat: ChatMessage[];
 	images: ChatImage[];

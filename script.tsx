@@ -507,6 +507,13 @@ async function showPlayerPage(videoId: string) {
 	});
 	window.addEventListener("resize", ev => { if(atBottom) scrollToBottom(); });
 
+	// fix highlights having timestamps from video highlight was made from
+	if(streamData.globalOffset) {
+		for(let msg of streamData.chat) {
+			msg.offset -= streamData.globalOffset;
+		}
+	}
+
 	let info = nt("div", sidebar, "info-pane");
 	nt("div", info, "title").innerText = streamData.title;
 	nt("div", info, "desc").innerText = streamData.description?.replace(/&#39;/g, "'") ?? "No Description Provided";
